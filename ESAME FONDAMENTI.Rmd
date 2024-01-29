@@ -1,0 +1,1193 @@
+---
+title: "Analisi della MLS DA 2000 A 2022"
+author: "WILLY DJANGANG"
+date: "2024-01-28"
+output: html_document 
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+
+library(ggplot2)
+library(ggplotify)
+library(plotly)
+library(extrafont)
+library(tidyverse)
+library(ggimage)
+library(magick)
+library(gridGraphics)
+library(curl)
+library(ggthemes)
+library(gapminder)
+library(httr)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r}
+ "Evoluzione del Numero di Partecipanti nelle Stagioni della MLS"
+mls_standings <- read.csv("W:/FONDAMENTI DEI DATI/mls standings/mls_standings.csv")
+View(mls_standings)
+
+
+numero_squadre_per_stagionel <- mls_standings %>%
+  group_by(Season) %>%
+  summarize(NumeroSquadre = n_distinct(Team))
+
+barplot_squadre_per_stagionel <- ggplot(numero_squadre_per_stagionel, aes(x = Season, y = NumeroSquadre, fill = Season)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Andamento del Numero di Squadre per Stagione nella Major League Soccer (MLS)",
+       x = "Stagione", y = "Numero di Squadre") +
+   theme_fivethirtyeight()
+
+# Visualizza il barplot
+print(barplot_squadre_per_stagionel)
+```
+
+
+
+
+
+```{r}
+
+# Calcola il coefficiente di correlazione di Pearson
+
+library(tidyverse)
+numero_squadre_per_stagionel <- mls_standings %>%
+  group_by(Season) %>%
+  summarize(NumeroSquadre = n_distinct(Team))
+
+correlazione <- cor(numero_squadre_per_stagionel$Season, numero_squadre_per_stagionel$NumeroSquadre)
+
+# Visualizza il grafico di dispersione o a linee
+ # Filtra i NA nel dataframe
+#numero_squadre_per_stagione <- numero_squadre_per_stagionel[complete.cases(numero_squadre_per_stagione), ]
+
+numero_squadre_per_stagioneo <- na.omit(numero_squadre_per_stagionel)
+
+# Calcola il coefficiente di correlazione di Pearson
+correlazione <- cor(numero_squadre_per_stagionel$Season, numero_squadre_per_stagionel$NumeroSquadre, use = "complete.obs")
+
+# Visualizza il grafico di dispersione o a linee
+ REGRESSIONE_STAGIONE_TEAM = ggplot(numero_squadre_per_stagionel, aes(x = Season, y = NumeroSquadre)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Correlazione tra Stagione e Numero di Squadre",
+       x = "Stagione", y = "Numero di Squadre") +
+  theme_minimal()
+
+# Stampa il coefficiente di correlazione
+ t = print(paste("Coefficiente di correlazione di Pearson:", round(correlazione, 3)))
+ 
+ 
+ 
+# Calcola il coefficiente di correlazione di Pearson
+#correlazione <- cor(numero_squadre_per_stagione$Season, numero_squadre_per_stagione$NumeroSquadre)
+
+# Visualizza il grafico di dispersione o a linee
+ # Filtra i NA nel dataframe
+#numero_squadre_per_stagionel <- numero_squadre_per_stagione[complete.cases(numero_squadre_per_stagione), ]
+
+# Calcola il coefficiente di correlazione di Pearson
+correlazionel <- cor(numero_squadre_per_stagioneo$Season, numero_squadre_per_stagioneo$NumeroSquadre, use = "complete.obs")
+
+# Visualizza il grafico di dispersione o a linee
+ REGRESSIONE_STAGIONE_TEAMlo = ggplot(numero_squadre_per_stagioneo, aes(x = Season, y = NumeroSquadre)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Correlazione tra Stagione e Numero di Squadre",
+       x = "Stagione", y = "Numero di Squadre") +
+  theme_minimal()
+
+# Stampa il coefficiente di correlazione
+ t = print(paste("Coefficiente di correlazione di Pearson:", round(correlazionel, 3)))
+ 
+ 
+```
+
+
+
+```{r}
+# Supponendo che tu abbia una variabile di regressione chiamata 'Season' nel tuo dataset
+modello_reg <- lm(NumeroSquadre ~ Season, data = numero_squadre_per_stagioneo)
+
+
+# Crea un dataframe con le stagioni desiderate
+predizioni_df <- data.frame(Season = c(2025, 2026,2027))
+
+# Prevedi il numero di squadre usando il modello
+predizioni_df$NumeroSquadre_Predette <- predict(modello_reg, newdata = predizioni_df)
+
+# Visualizza le predizioni
+print(predizioni_df)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+
+
+```{r}
+#Seleziona le colonne rilevanti da mls_st
+mls_s =  numero_squadre_per_stagionel <- mls_standings %>%
+  group_by(Season) %>%
+  summarize(NumeroSquadre = n_distinct(Team))
+
+dati_clusteringl <- numero_squadre_per_stagioneo[, c("Season", "NumeroSquadre")]
+
+
+
+# Utilizza il k-means clustering
+set.seed(123)  # Per rendere i risultati riproducibili
+kmeans_modelc <- kmeans(dati_clusteringl, centers = 3)  # Specifica il numero di cluster desiderati
+
+set.seed(123)  # Per rendere i risultati riproducibili
+kmeans_modelco <- kmeans(mls_s, centers = 3)  # Specifica il numero di cluster desiderati
+
+# Aggiungi le informazioni di clustering al dataframe originale
+dati_clusteringl$Cluster <- as.factor(kmeans_modelc$cluster)
+
+# Visualizza il risultato del clustering
+cluster_STAGIONElo <- ggplot(dati_clusteringl, aes(x = Season, y = NumeroSquadre, color = Cluster)) +
+  geom_point() +
+  geom_text(aes(label = as.character(Season)), vjust = -0.5, position = position_dodge(0.9), size = 3) +
+  labs(title = "Clustering delle Stagioni in Base al Numero di Squadre",
+       x = "Stagione", y = "Numero di Squadre") +
+  theme_fivethirtyeight()
+cluster_STAGIONElo
+```
+
+
+```{r}
+
+library(highcharter)
+
+# Seleziona le tuple con stagione da 2000 a 2008
+subset_2000_2008p <- filter(mls_standings, Season >= 2000 & Season <= 2008)
+#subset_2000_2008pl <- filter(mls_standings, Season <= 2000 & Season <= 2008)
+
+# Seleziona le tuple con stagione da 2009 a 2016
+subset_2009_2016p <- filter(mls_standings, Season >= 2009 & Season <= 2016)
+
+#SUBS <- mls_standings %>%
+  # filter(mls_standings$Team == "MIA")
+
+# Seleziona le tuple con stagione da 2017 a 2020
+subset_2017_2022p <- filter(mls_standings, Season >= 2017 & Season <= 2022)
+
+observ = mls_standings %>%
+  ggplot(aes(x = Team,
+             y = Pts,
+             size = W,
+             color = GF))+
+  geom_point()+
+  facet_wrap(mls_standings$Season)+
+  labs(title = "Andamendo delle squadre basati dui punti gruppati dai cluster annni",
+       x = "Punti di Ogni Team",
+       y = "Squadra")
+
+
+
+highchart_chart_2000_2008p <- highchart() %>%
+  hc_chart(type = "scatter") %>%
+  hc_title(text = "Andamento delle squadre 2000-2008") %>%
+  hc_xAxis(categories = subset_2000_2008p$Team) %>%
+  hc_yAxis(title = list(text = "Punti di ogni Team")) %>%
+  hc_add_series(
+    data = subset_2000_2008p,
+    hcaes(x = Team, y = Pts, size = W, color = GF),
+    type = "scatter",
+    name = "Punti"
+  ) %>%
+  hc_tooltip(pointFormat = '<b>{point.Team}</b><br>Punti: {point.y}<br>Stagione: {point.Season}<br>Posizione: {point.Pos}  <br>GOAL SEGNATI: {point.GF} <br>Partite vinte: {point.W}')
+
+# Creare e visualizzare i grafici
+observe1p <- subset_2000_2008p %>%
+  ggplot(aes(x = Team, y = Pts, size = W, color = GF)) +
+  geom_point() +
+  labs(title = "Andamento delle squadre 2000-2008",
+       x = "Punti di ogni Team",
+       y = "Squadra") +
+  scale_color_gradient2_tableau() +
+  theme_fivethirtyeight()
+
+
+
+
+observe2p <- subset_2009_2016p %>%
+  ggplot(aes(x = Team, y = Pts, size = W, color = GF)) +
+  geom_point() +
+  labs(title = "Andamento delle squadre 2009-2016",
+       x = "Punti di ogni Team",
+       y = "Squadra") +
+  scale_color_gradient2_tableau() +
+  theme_fivethirtyeight()
+
+# Convertire il grafico ggplot in highchart
+highchart_chart_2009_2016p <- highchart() %>%
+  hc_chart(type = "scatter") %>%
+  hc_title(text = "Andamento delle squadre 2000-2008") %>%
+  hc_xAxis(categories = subset_2009_2016p$Team) %>%
+  hc_yAxis(title = list(text = "Punti di ogni Team")) %>%
+  hc_add_series(
+    data = subset_2009_2016p,
+    hcaes(x = Team, y = Pts, size = W, color = GF),
+    type = "scatter",
+    name = "Punti"
+  ) %>%
+  hc_tooltip(pointFormat = '<b>{point.Team}</b><br>Punti: {point.y}<br>Stagione: {point.Season}<br>Città: {point.city} <br>Partite vinte: {point.W}') %>%
+  hc_legend(enabled = TRUE) %>%
+  hc_credits(enabled = TRUE, text = 'Crediti: @wildjang') %>%
+  hc_theme(theme = "darkunica") 
+
+
+
+library(plotly)
+
+observe2pp <- subset_2009_2016p %>%
+  plot_ly(x = ~Team, y = ~Pts, size = ~W, color = ~GF, text = ~paste("Stagione: ", Season, "<br>Squadra: ", Team, "<br> Partita vinta  ", W)) %>%
+  add_markers() %>%
+  layout(
+    title = "Andamento delle squadre 2009-2016",
+    xaxis = list(title = "Punti di ogni Team"),
+    yaxis = list(title = "Squadra"),
+    showlegend = FALSE
+  )
+
+
+
+# Convertire il grafico ggplot in highchart
+highchart_chart_2009_2016p <- highchart() %>%
+  hc_chart(type = "scatter") %>%
+  hc_title(text = "Andamento delle squadre 2009-2016") %>%
+  hc_xAxis(categories = subset_2009_2016p$Team) %>%
+  hc_yAxis(title = list(text = "Punti di ogni Team")) %>%
+  hc_add_series(
+    data = subset_2009_2016p,
+    hcaes(x = Team, y = Pts, size = W, color = GF),
+    type = "scatter",
+    name = "Punti"
+  ) %>%
+  hc_tooltip(pointFormat = '<b>{point.Team}</b><br>Punti: {point.y}<br>Stagione: {point.Season}<br>Città: {point.city} <br>Partite vinte: {point.W}') %>%
+  hc_legend(enabled = TRUE) %>%
+  hc_credits(enabled = TRUE, text = 'Crediti: @wildjang') %>%
+  hc_theme(theme = "darkunica") 
+
+
+
+library(plotly)
+
+observe2pp <- subset_2009_2016p %>%
+  plot_ly(x = ~Team, y = ~Pts, size = ~W, color = ~GF, text = ~paste("Stagione: ", Season, "<br>Squadra: ", Team, "<br> Partita vinta  ", W)) %>%
+  add_markers() %>%
+  layout(
+    title = "Andamento delle squadre 2009-2016",
+    xaxis = list(title = "Punti di ogni Team"),
+    yaxis = list(title = "Squadra"),
+    showlegend = FALSE
+  )
+
+library(readxl)
+ mls_mod <- read_excel("W:/FONDAMENTI DEI DATI/mls mod.xlsx")
+ View(mls_mod)
+
+
+
+observe3p <- subset_2017_2022p %>%
+  ggplot(aes(x = Team, y = Pts, size = W, color = GF)) +
+  geom_point() +
+  labs(title = "Andamento delle squadre 2017-2022",
+       x = "Punti di ogni Team",
+       y = "Squadra") +
+  #scale_color_gradient2(colors = rainbow(10)) 
+  scale_color_gradient2_tableau()+
+  theme_minimal()
+
+
+# Convertire il grafico ggplot in highchart
+highchart_chart_2017_2022 <- highchart() %>%
+  hc_chart(type = "scatter") %>%
+  hc_title(text = "Andamento delle squadre 2017-2022") %>%
+  hc_xAxis(categories = subset_2017_2022p$Team) %>%
+  hc_yAxis(title = list(text = "Punti di ogni Team")) %>%
+  hc_add_series(
+    data = subset_2017_2022p,
+    hcaes(x = Team, y = Pts, size = W, color = GF),
+    type = "scatter",
+    name = "Punti"
+  ) %>%
+  hc_tooltip(pointFormat = '<b>{point.Team}</b><br>Punti: {point.y}<br>Stagione: {point.Season}<br>Città: {point.city}') %>%
+  hc_legend(enabled = TRUE) %>%
+  hc_credits(enabled = TRUE, text = 'Crediti: @wildjang') %>%
+  hc_theme(theme = "darkunica") 
+
+
+# Sommario riassuntivo delle squadre
+library(tidyverse)
+
+summary_datalp <- mls_standings %>%
+  group_by(Team, Season) %>%
+  summarise(
+    MediaPunti = mean(Pts),
+    MediaPosizione = mean(Pos),
+    MediaPartiteVinte = mean(W),
+    MediaGoalSegnati = mean(GF)
+    # Aggiungi altre colonne se necessario
+  ) %>%
+  group_by(Team) %>%
+  summarise(
+    MediaPunti = mean(MediaPunti),
+    MediaPosizione = mean(MediaPosizione),
+    MediaPartiteVinte = mean(MediaPartiteVinte),
+    MediaGoalSegnati = mean(MediaGoalSegnati)
+    # Aggiungi altre colonne se necessario
+  )
+
+# Calcola il numero di volte che ogni squadra ha trascorso nella MLS
+#volte_ml <- table(mls_stt$Team)
+
+# Calcola il numero di volte che ogni squadra ha trascorso nella MLS
+volte_mls <- table(mls_standings$Team)
+
+# Creare la colonna VolteMLS in summary_data
+summary_datalp <- left_join(summary_datalp, data.frame(Team = names(volte_mls), VolteMLS = as.numeric(volte_mls)), by = "Team")
+
+
+# Funzione per calcolare la media basata sul numero di volte
+media1 <- function(x, weights) {
+  sum(x * weights) / sum(weights)
+}
+
+# Seleziona le colonne di interesse
+colonne_interesse <- c("Pts", "Pos", "W", "GF")
+
+summary_datalolp <- mls_standings %>%
+  group_by(Team, Season) %>%
+  summarise(across(all_of(colonne_interesse), mean)) %>%
+  group_by(Team) %>%
+  summarise(
+    Pts = max(Pts),  # Calcola il massimo per la colonna "Pts"
+     Season_max_Pts = Season[which.max(Pts)],  # Aggiungi la colonna "Season" corrispondente al massimo punteggio
+    across(all_of(colonne_interesse[-which(colonne_interesse == "Pts")]), ~ media1(., length(unique(Season)))),
+    VolteMLS = sum(length(unique(Season)))  # Somma totale delle partecipazioni
+  )
+
+
+
+mls_st <- merge(mls_standings, mls_mod, by = "Team", all.x = TRUE, all.y = TRUE)
+mls_st <- na.omit(mls_st)
+
+
+# Funzione per calcolare la media basata sul numero di volte
+media1 <- function(x, weights) {
+  sum(x * weights) / sum(weights)
+}
+
+# Seleziona le colonne di interesse
+colonne_interesse <- c("Pts", "Pos", "W", "GF")
+
+# Applica la funzione media1 alle colonne di interesse
+summary_datalo <- mls_st %>%
+  group_by(Team, Season) %>%
+  summarise(across(all_of(colonne_interesse), mean)) %>%
+  group_by(Team) %>%
+  summarise(
+    across(all_of(colonne_interesse), ~ media1(., length(unique(Season)))),
+    VolteMLS = sum(length(unique(Season)))  # Somma totale delle partecipazioni
+  )
+
+library(ggplot2)
+
+# Creazione del grafico a barre    da modificare 
+grafico_riassuntivo <- ggplot(summary_datalo, aes(x = Team, y = Pts)) +
+  geom_bar(stat = "identity", fill = "skyblue", width = 0.7) +
+  labs(title = "Riassunto Punti Massimi per Squadra",
+       x = "Squadra",
+       y = "Punteggio Massimo") +
+  geom_text(aes(label = GF), vjust = -0.5) +  # Aggiunge le etichette dei valori sopra le barre
+  theme_minimal()  # Scegli un tema di sfondo per il grafico
+
+# Visualizzazione del grafico
+print(grafico_riassuntivo)
+
+grafico_riassuntivol <- ggplot(summary_datalolp, aes(x = Team, y = Pts, size = VolteMLS, color = as.factor(Season_max_Pts))) +
+  geom_point(alpha = 0.4) +
+  labs(title = "Riassunto Punti Massimi per Squadra",
+       x = "Squadra",
+       y = "Punteggio Massimo",
+       size = "Partite Vinte Totali") +
+  scale_size_continuous(range = c(5, 15)) +  # Imposta la scala per la size delle palline
+  theme_minimal() +  # Scegli un tema di sfondo per il grafico
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Ruota le etichette sull'asse x per una migliore leggibilità
+
+# Visualizzazione del grafico
+
+
+grafico_summary_datalopp <- ggplot(summary_datalolp, aes(x = Team, y = Pts, size = W, color = Season_max_Pts)) +
+  geom_point() +
+  facet_wrap(~Season_max_Pts, scales = "free_y", ncol = 1) +  # Utilizza scales = "free_y" per facilitare la visualizzazione
+  labs(title = "Andamento delle Squadre") +
+  scale_color_gradient(low = "blue", high = "red") +  # Personalizza la scala dei colori
+  scale_size_continuous(range = c(3, 10)) +  # Personalizza la scala delle dimensioni
+  theme_minimal() 
+
+
+library(gganimate)
+library(transformr)
+library(gifski)
+
+# Funzione per creare l'animazione
+crea_animazione <- function(subset_df, titolo) {
+  anim <- ggplot(subset_df, aes(x = Pts, y = GF, color = Team, label = Team)) +
+    geom_point() +
+    geom_text(aes(label = Team), hjust = 1.2, vjust = 1.2, size = 3) +  # Aggiungi etichette di testo per i nomi delle squadre
+    labs(title = titolo,
+         x = "Punti",
+         y = "Goal Segnati") +
+    transition_states(Season, transition_length = 2, state_length = 1) +
+    enter_fade() +
+    exit_fade() +
+    ease_aes('linear') +
+    shadow_mark()  # Aggiungi un frame per visualizzare la stagione corrente
+
+  return(anim)
+}
+
+
+# Suddividi il dataframe in base agli intervalli di stagioni
+subset_2000_2008 <- subset(mls_stt, Season >= 2000 & Season <= 2008)
+subset_2009_2016 <- subset(mls_stt, Season >= 2009 & Season <= 2016)
+subset_2017_2020 <- subset(mls_stt, Season >= 2017 & Season <= 2020)
+
+# Crea le animazioni per ciascun subset
+animazione_2000_2008 <- crea_animazione(subset_2000_2008, "2000-2008")
+animazione_2009_2016 <- crea_animazione(subset_2009_2016, "2009-2016")
+animazione_2017_2020 <- crea_animazione(subset_2017_2020, "2017-2020")
+
+
+
+
+# Aggiungi una colonna di classifica basata su Pts e GF
+mls_stt$Rank <- ave(mls_stt$Pts + mls_stt$GF, mls_stt$Season, FUN = rank, decreasing = TRUE)
+
+# Seleziona le prime 5 squadre di ciascun periodo
+top5_2000_2008 <- subset(mls_stt, Season >= 2000 & Season <= 2008 & Rank <= 5)
+top5_2009_2016 <- subset(mls_stt, Season >= 2009 & Season <= 2016 & Rank <= 5)
+top5_2017_2020 <- subset(mls_stt, Season >= 2017 & Season <= 2020 & Rank <= 5)
+```
+Si nota che all'andamento del tempo la difficolta di stare tramite i primi/ essere campioni è dura perché da 2000 a 2008 abbiamo 
+
+```{r}
+# Combina i dataframe delle prime 5 squadre di ciascun periodo
+top5_df <- rbind(top5_2000_2008, top5_2009_2016, top5_2017_2020)
+
+library(viridis)
+# Crea l'animazione includendo un'indicazione visuale per le prime 5 squadre di ciascun periodo
+animazione_totalelp <- ggplot(top5_df, aes(x = MediaPunti, y = MediaPartiteVinte, size = Pos, fill = Pos, label = Team)) +
+  geom_point(shape = 21, color = "black", stroke = 0.5) +  # shape 21 include un bordo
+  geom_text(aes(label = Team), hjust = 1.2, vjust = 1.2, size = 3, color = "black") +
+  # Punti rossi per le prime 5 squadre
+  labs(title = "Andamento delle Squadre",
+       x = "Punti",
+       y = "Goal Segnati") +
+  scale_size_continuous(range = c(3, 10)) +  # Imposta la scala delle dimensioni dei punti
+  scale_fill_continuous(type = "viridis") +  # Puoi utilizzare diversi tipi di scale di colore
+  transition_states(Season, transition_length = 2, state_length = 1) +
+  enter_fade() +
+  exit_fade() +
+  ease_aes('linear') +
+  shadow_mark()
+
+# Visualizza l'animazione
+animazione_totalelp
+
+
+library(ggtext)
+
+mls_stt_media <- mls_stt %>%
+  group_by(Season) %>%
+  summarise(
+    MediaPunti = mean(Pts),
+    MediaPosizione = mean(Pos),
+    MediaPartiteVinte = mean(W)
+  )
+
+# Unisci le medie al dataset originale
+mls_stt <- left_join(mls_stt, mls_stt_media, by = "Season")
+
+top5l_2000_2008 <- subset(mls_stt, Season >= 2000 & Season <= 2008 & Pos <= 5)
+top5l_2009_2016 <- subset(mls_stt, Season >= 2009 & Season <= 2016 & Pos <= 5)
+top5l_2017_2022 <- subset(mls_stt, Season >= 2017 & Season <= 2022 & Pos <= 5)
+
+# Combina i dataframe delle prime 5 squadre di ciascun periodo
+top5l_df <- rbind(top5l_2000_2008, top5l_2009_2016, top5l_2017_2020)
+
+# venire qua   # da rivedere  pagina 1229
+library(RColorBrewer)
+custom1 = viridis::plasma(n = 42)
+pop =  top5l_2000_2008 %>%
+      hchart('pie', hcaes(x = city, y = Pos, color = custom1 , label = Season)) %>%
+      hc_tooltip(pointFormat = '<b> Proportion: </b> {point.percentage:,.2f}%') %>%
+      hc_title(text = "Most WINNERS", style = list(fontSize = '15px', fontWeight = 'bold')) %>%
+      hc_legend(enabled = TRUE, text = '@wildjang')
+
+library(ggplot2)
+library(ggtext)
+library(ggplotify)
+library(ggrepel)
+library(av)
+
+graficol <- ggplot(top5l_df, aes(x = MediaPunti, y = Rank, fill = Season, label = Team)) +
+  geom_point() +
+  geom_text_repel(data = top5l_df, aes(label = Team), size = 3, box.padding = 0.5, force = 4, segment.color = "grey50") +
+  labs(title = "Andamento delle Squadre",
+       x = "Media Punti",
+       y = "Rank") +
+  transition_states(Season, transition_length = 2, state_length = 1) +
+  enter_fade() +
+  exit_fade() +
+  ease_aes('linear') +
+  #scale_color_manual(values = rainbow(length(unique(top5l_df$Season)))) +
+  shadow_mark()
+graficol
+
+
+
+# Carica le librerie necessarie
+library(dplyr)
+library(ggplot2)
+
+# Unisci i due dataset in base alla colonna "Team"
+merged_data <- inner_join(mls_standings, summary_datalolp, by = "Team")
+
+# Aggrega i dati per ottenere l'elenco delle squadre vincitrici di ogni stagione
+
+vincitori_per_stagionep <- merged_data %>%
+  group_by(Season) %>%
+  slice(which.max(Pts.x)) %>%
+  select(Season, Team, Pts.y) %>%
+  arrange(Season)
+
+
+library(viridis)
+library(highcharter)
+custom <- viridis::mako(n = 23)
+
+po =  vincitori_per_stagionep %>%
+      hchart('pie', hcaes(x = Team, y = Pts.y, color = custom )) %>%
+      hc_tooltip(pointFormat = '<b> Proportion: </b> {point.percentage:,.2f}%') %>%
+      hc_title(text = "Most WINNERS", style = list(fontSize = '15px', fontWeight = 'bold')) %>%
+      hc_legend(enabled = TRUE, text = '@wildjang')
+
+
+
+
+library(ggplot2)
+library(ggthemes)
+
+
+# Unisci i due dataset in base alla colonna "Team"
+merged_data <- inner_join(mls_standings, summary_datalolp, by = "Team")
+
+opo <- ggplot(merged_data %>% filter(Pos.x == 1), aes(x = reorder(Team, -Pts.x), fill = as.factor(Season))) +
+  geom_bar(stat = "count") +
+  geom_text(stat = "count", aes(label = ifelse(rank(-Pts.x, ties.method = "first") == 1, as.character(Season), "")),
+            position = position_stack(vjust = 0.5), size = 3) +
+  scale_fill_manual(values = rainbow(length(1:23))) +
+  labs(title = "Andamento delle squadre di vertice nella MLS",
+       x = "Squadra",
+       y = "Numero di volte in prima posizione") +
+  theme_fivethirtyeight()
+
+
+# Carica il pacchetto
+library(viridis)
+
+# Crea il grafico con una scala di colori più grande (viridis)
+opop <- ggplot(merged_data %>% filter(Pos.x == 1), aes(x = reorder(Team, -Pts.x), fill = as.factor(Season))) +
+  geom_bar(stat = "count") +
+  geom_text(stat = "count", aes(label = ifelse(rank(-Pts.x, ties.method = "first") == 1, as.character(Season), "")),
+            position = position_stack(vjust = 0.5), size = 3) +
+  scale_fill_viridis(discrete = TRUE) +  # Utilizza la scala di colori viridis
+  labs(title = "Andamento delle squadre di vertice nella MLS",
+       x = "Squadra",
+       y = "Numero di volte in prima posizione") +
+  theme_fivethirtyeight()
+
+
+# Filtra le squadre che sono apparse nelle prime posizioni per un numero significativo di volte
+soglia_significativa <- 1 # Personalizza la soglia a tuo piacimento
+nuove_forze_dominanti <- merged_data %>%
+  filter(Pos.x %in% c(1:5)) %>%
+  group_by(Season, Team) %>%
+  summarize(Numero_di_volte = n()) %>%
+  filter(Numero_di_volte >= soglia_significativa)
+
+# Visualizza le nuove squadre dominanti nel corso degli anni
+print(nuove_forze_dominanti)
+
+
+
+
+  
+# Identifica le squadre di espansione (sostituisci con i nomi delle squadre di espansione effettive)
+squadre_espansione <- c("ATL", "ATX", "CIN", "HOU", "LAFC", "MIA", "MIN", "NSH", "NYC", "ORL", "PHI", "POR", "RSL", "SEA", "VAN", "TOR")
+
+# Filtra il dataframe per le squadre di espansione
+subs_espansione <- mls_standings %>% filter(Team %in% squadre_espansione)
+
+# Filtra il dataframe per le squadre di espansione
+subs_espansionel <- mls_st %>% filter(Team %in% squadre_espansione)
+
+# Analizza le performance
+analisi_performance <- subs_espansione %>%
+  mutate(Espansione = ifelse(Team %in% squadre_espansione, "Espansione", "Non Espansione")) %>%
+  group_by(Espansione) %>%
+  summarise(
+    Media_Pts = mean(Pts),
+    Media_Posizione = mean(Pos),
+    Media_Partite_Vinte = mean(W)
+    # Aggiungi altre colonne se necessario
+  )
+
+
+
+
+ library(ggvis)
+ 
+ mls_stp = mls_stt %>%
+   group_by(city) %>%
+   ggvis(~city, ~Pts, fill = ~city) %>%
+   ggvis::layer_boxplots()
+ 
+ 
+ 
+ ```{r}
+library(dplyr)
+
+# Calcola la media per ogni squadra nelle colonne Pts, PPG e W
+subset_2000_2008pl <- subset_2000_2008p %>%
+  group_by(Team) %>%
+  summarise(
+    Media_Pts = mean(Pts),
+    Media_PPG = mean(PPG),
+    Media_W = mean(W),
+    Media_GF = mean(GF)
+  )
+
+# Calcola il rango basato sulla media dei punti
+subset_2000_2008plL <- subset_2000_2008pl %>%
+  arrange(desc(Media_Pts)) %>%
+  mutate(Rank = row_number())
+
+# Seleziona le prime 5 squadre per ogni stagione in base al rango
+top5_2000_2008pl <- subset_2000_2008plL %>%
+  filter(Rank <= 5)
+
+library(dplyr)
+
+# Calcola il massimo dei punti e la stagione corrispondente per ogni squadra
+max_pts_season <- subset_2000_2008p %>%
+  group_by(Team) %>%
+  summarise(
+    Max_Pts = max(Pts),
+    Season_Max_Pts = Season[which.max(Pts)]
+  )
+
+# Uniscilo con il dataframe top5_2000_2008
+top5_2000_2008m <- top5_2000_2008pl %>%
+  left_join(max_pts_season, by = "Team")
+
+# Visualizza il risultato
+print(top5_2000_2008m)
+```
+
+
+
+```{r}
+library(dplyr)
+
+# Calcola la media per ogni squadra nelle colonne Pts, PPG e W
+subset_2009_2016pl <- subset_2009_2016p %>%
+  group_by(Team) %>%
+  summarise(
+    Media_Pts = mean(Pts),
+    Media_PPG = mean(PPG),
+    Media_W = mean(W),
+    Media_GF = mean(GF)
+  )
+
+# Calcola il rango basato sulla media dei punti
+subset_2009_2016plL <- subset_2009_2016pl %>%
+  arrange(desc(Media_Pts)) %>%
+  mutate(Rank = row_number())
+
+# Seleziona le prime 5 squadre per ogni stagione in base al rango
+top5_2009_2016pl <- subset_2009_2016plL %>%
+  filter(Rank <= 5)
+
+# Calcola il massimo dei punti e la stagione corrispondente per ogni squadra
+max_pts_season_09_16 <- subset_2009_2016p %>%
+  group_by(Team) %>%
+  summarise(
+    Max_Pts = max(Pts),
+    Season_Max_Pts = Season[which.max(Pts)]
+  )
+
+# Uniscilo con il dataframe top5_2000_2008
+top5_2009_2016m <- top5_2009_2016pl %>%
+  left_join(max_pts_season_09_16, by = "Team")
+
+# Visualizza il risultato
+print(top5_2009_2016m)
+```
+
+
+```{r}
+library(dplyr)
+
+# Calcola la media per ogni squadra nelle colonne Pts, PPG e W
+subset_2017_2022pl <- subset_2017_2022p %>%
+  group_by(Team) %>%
+  summarise(
+    Media_Pts = mean(Pts),
+    Media_PPG = mean(PPG),
+    Media_W = mean(W),
+    Media_GF = mean(GF)
+  )
+
+# Calcola il rango basato sulla media dei punti
+subset_2017_2022plL <- subset_2017_2022pl %>%
+  arrange(desc(Media_Pts)) %>%
+  mutate(Rank = row_number())
+
+# Seleziona le prime 5 squadre per ogni stagione in base al rango
+top5_2017_2022pl <- subset_2017_2022plL %>%
+  filter(Rank <= 5)
+
+# Calcola il massimo dei punti e la stagione corrispondente per ogni squadra
+max_pts_season_17_22 <- subset_2017_2022p %>%
+  group_by(Team) %>%
+  summarise(
+    Max_Pts = max(Pts),
+    Season_Max_Pts = Season[which.max(Pts)]
+  )
+
+# Uniscilo con il dataframe top5_2000_2008
+top5_2017_2022m <- top5_2017_2022pl %>%
+  left_join(max_pts_season_17_22, by = "Team")
+
+# Visualizza il risultato
+print(top5_2017_2022m)
+```
+
+
+```{r}
+library(plotly)
+
+# Converti la colonna Season_Max_Pts in un fattore per ordinare correttamente sull'asse x
+top5_2000_2008m$Season_Max_Pts <- factor(top5_2000_2008m$Season_Max_Pts, levels = unique(top5_2000_2008m$Season_Max_Pts))
+
+# Creazione del grafico interattivo
+plot1 <- plot_ly(top5_2000_2008m, x = ~Team, y = ~Media_Pts, type = 'scatter', mode = 'markers',
+                text = ~paste("Season_Max_Pts: ", Season_Max_Pts, "<br>Rango: ", Rank, "<br>Punto max: ", Max_Pts, "<br> Media_GF: ", Media_GF),
+                marker = list(size = ~Media_GF, color = ~Max_Pts, colorscale = 'Viridis')) %>%
+  layout(title = "Top 5 Squadre (2000-2008)",
+         xaxis = list(title = "Stagione Max Pts"),
+         yaxis = list(title = "Media Punti"),
+         hovermode = "closest") 
+
+
+library(plotly)
+
+# Creazione del grafico interattivo
+plot1l <- plot_ly(top5_2000_2008m, x = ~Team, y = ~Media_Pts, type = 'scatter', mode = 'markers',
+                text = ~paste("Season_Max_Pts: ", Season_Max_Pts, "<br>Rango: ", Rank, "<br>Punto max: ", Max_Pts, "<br> Media_GF: ", Media_GF),
+                marker = list(size = ~Media_GF, color = ~Max_Pts, colorscale = 'Viridis')) %>%
+  layout(title = "Top 5 Squadre (2000-2008)",
+         xaxis = list(title = "Stagione Max Pts"),
+         yaxis = list(title = "Media Punti"),
+         hovermode = "closest",
+         template = "plotly_dark")  # Usa 'plotly_dark' come tema di default
+
+# Aggiungi colori personalizzati all'arcobaleno
+plot1l$marker$colorbar$len <- 0.5
+plot1l$marker$colorbar$lenmode <- "fraction"
+plot1l$marker$colorbar$title <- "Max_Pts"
+plot1l$marker$colorbar$tickvals <- c(1, 2, 3, 4, 5)  # Aggiungi i valori desiderati
+plot1l$marker$colorbar$ticktext <- c("Minimo", "", "", "", "Massimo")  # Etichette personalizzate
+
+# Visualizza il grafico
+plot1l
+
+
+
+library(highcharter)
+library(highr)
+# Creazione del grafico interattivo direttamente con la sintassi di Highcharter
+highchart_plot1 <- plot_ly(top5_2000_2008m, x = ~Team, y = ~Media_Pts, type = 'scatter', mode = 'markers',
+                           text = ~paste("Season_Max_Pts: ", Season_Max_Pts, "<br>Rango: ", Rank, "<br>Punto max: ", Max_Pts, "<br> Media_GF: ", Media_GF),
+                           marker = list(size = ~Media_GF, color = ~Max_Pts, colorscale = 'Viridis')) %>%
+  layout(title = "Top 5 Squadre (2000-2008)",
+         xaxis = list(title = "Stagione Max Pts"),
+         yaxis = list(title = "Media Punti"),
+         hovermode = "closest") 
+# Visualizzazione del grafico Highcharter
+highchart_plot1
+
+
+# Creazione del grafico interattivo direttamente con la sintassi di Highcharter
+highchart_plot2 <- plot_ly(top5_2009_2016m, x = ~Team, y = ~Media_Pts, type = 'scatter', mode = 'markers',
+                           text = ~paste("Season_Max_Pts: ", Season_Max_Pts, "<br>Rango: ", Rank, "<br>Punto max: ", Max_Pts, "<br> Media_GF: ", Media_GF),
+                           marker = list(size = ~Media_GF, color = ~Max_Pts, colorscale = 'Viridis')) %>%
+  layout(title = "Top 5 Squadre (2000-2008)",
+         xaxis = list(title = "Stagione Max Pts"),
+         yaxis = list(title = "Media Punti"),
+         hovermode = "closest") 
+# Visualizzazione del grafico Highcharter
+highchart_plot2
+
+# Creazione del grafico interattivo direttamente con la sintassi di Highcharter
+highchart_plot3 <- plot_ly(top5_2017_2022m, x = ~Team, y = ~Media_Pts, type = 'scatter', mode = 'markers',
+                           text = ~paste("Season_Max_Pts: ", Season_Max_Pts, "<br>Rango: ", Rank, "<br>Punto max: ", Max_Pts, "<br> Media_GF: ", Media_GF),
+                           marker = list(size = ~Media_GF, color = ~Max_Pts, colorscale = 'Viridis')) %>%
+  layout(title = "Top 5 Squadre (2000-2008)",
+         xaxis = list(title = "Stagione Max Pts"),
+         yaxis = list(title = "Media Punti"),
+         hovermode = "closest") 
+# Visualizzazione del grafico Highcharter
+highchart_plot3
+
+library(highcharter)
+
+# Visualizzazione dei grafici Highcharter insieme
+highcharter::hcarrange(highchart_plot1, highchart_plot2, highchart_plot3, nrow = 1)
+
+
+
+# Visualizzazione dei grafici Highcharter insieme
+par(mfrow=c(1,3))
+highchart_plot1
+highchart_plot2
+highchart_plot3
+```
+
+
+```{r}
+library(ggplot2)
+library(tidyverse)
+library(ggthemes)
+
+
+# Creazione del grafico con i vincitori di ogni stagione
+winners_plot <- mls_stt %>%
+  group_by(Season) %>%
+  filter(Pos == 1) %>%
+  ggplot(aes(x = Season, y = as.factor(Team))) +
+  geom_text(aes(label = Team), vjust = -0.5, size = 3) +
+  labs(title = "Vincitori della MLS per stagione",
+       x = "Stagione",
+       y = "Squadra") +
+  theme_fivethirtyeight()
+
+# Creazione del grafico con i tre team con più titoli
+top3_teams_plot <- bind_rows(
+  subset_2000_2008p,
+  subset_2009_2016p,
+  subset_2017_2022p
+) %>%
+  group_by(Team) %>%
+  summarise(Titoli = n_distinct(Rank == 1)) %>%
+  top_n(3, Titoli) %>%
+  ggplot(aes(x = reorder(Team, -Titoli), y = Titoli, fill = Team)) +
+  geom_bar(stat = "identity") +
+  labs(title = "I tre team con più titoli nella MLS",
+       x = "Squadra",
+       y = "Numero di Titoli") +
+  theme_fivethirtyeight()
+
+# Visualizzazione dei grafici
+winners_plot
+top3_teams_plot
+```
+
+
+```{r}
+
+library(dplyr)
+library(ggplot2)
+
+# Creazione della colonna Rank
+mls_stt <- mls_standings %>%
+  group_by(Season) %>%
+  mutate(Rank = rank(desc(Pts)))
+
+# Creazione del grafico con la colonna Rank
+rank_plot <- mls_stt %>%
+  ggplot(aes(x = Season, y = Rank, color = Team)) +
+  geom_point(size = 3) +
+  labs(title = "Posizione delle squadre in base ai punti",
+       x = "Stagione",
+       y = "Rank") +
+  theme_minimal()
+
+# Creazione del grafico con la colonna Rank
+rank_plotl <- mls_standings %>%
+  ggplot(aes(x = Season, y = Pos, color = Team)) +
+  geom_point(size = 3) +
+  labs(title = "Posizione delle squadre in base ai punti",
+       x = "Stagione",
+       y = "Rank") +
+  theme_minimal()
+
+# Visualizzazione del grafico
+rank_plot
+
+
+
+
+```
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(ggthemes)
+
+# Creazione della colonna Rank
+mls_sttp <- mls_standings %>%
+  group_by(Season) %>%
+  mutate(Rank = rank(desc(Pts)))
+
+# Creazione della colonna Titoli
+mls_sttp <- mls_sttp %>%
+  group_by(Team) %>%
+  mutate(Titoli = sum(Rank %in% c(1, 2, 3)))
+
+# Creazione del grafico con la colonna Titoli
+titoli_plot <- mls_sttp %>%
+  ggplot(aes(x = Team, y = Titoli, fill = Team)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Titoli vinti da ogni squadra",
+       x = "Squadra",
+       y = "Numero di Titoli") +
+  theme_fivethirtyeight()
+
+# Visualizzazione del grafico
+titoli_plot
+
+# Creazione del grafico con la colonna Titoli
+titoli_plotp <- mls_sttp %>%
+  ggplot(aes(x = Team, y = Titoli, fill = Titoli)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Titoli vinti da ogni squadra",
+       x = "Squadra",
+       y = "Numero di Titoli") +
+  theme_fivethirtyeight()
+
+# Visualizzazione del grafico
+titoli_plotp
+
+
+library(highcharter)
+
+# Creazione del grafico interattivo con geom_point
+titoli_plotpp <- mls_sttp %>%
+  hchart('point', hcaes(x = Team, y = Titoli, color = Titoli)) %>%
+  hc_add_theme(hc_theme_fivethirtyeight()) %>%
+  hc_title(text = "Titoli vinti da ogni squadra") %>%
+  hc_xAxis(categories = mls_sttp$Team) %>%
+  hc_yAxis(title = list(text = "Numero di Titoli")) %>%
+  hc_tooltip(pointFormat = '<b>{point.Team}</b><br>Titoli: {point.y}<br>Stagione: {point.Season}<br>Punti: {point.Pts}<br>Vittorie: {point.W}<br>Gol fatti: {point.GF}') %>%
+  hc_table(data = mls_sttp, hcaes(Team, Season, Pts, W, GF), pointFormat = '{point.Team}: {point.Pts} punti, {point.W} vittorie, {point.GF} gol fatti') %>%
+  hc_credits(enabled = TRUE, text = '@tuo_nome_utente')
+
+
+
+
+library(highcharter)
+# Creazione del grafico interattivo con geom_point e tabella
+titoli_plotpp <- summary_datalolp %>%
+  hchart('point', hcaes(x = Team, y = Titoli, color = Pts, size = W)) %>%
+  hc_title(text = "Titoli vinti da ogni squadra") %>%
+  hc_xAxis(categories = mls_sttp$Team) %>%
+  hc_yAxis(title = list(text = "Numero di Titoli")) %>%
+  hc_tooltip(pointFormat = '<b>{point.Team}</b><br>Titoli: {point.y}<br>Stagione: {point.Season}<br>Punti: {point.Pts}<br>Vittorie: {point.W}<br>Gol fatti: {point.GF}') %>%
+  hc_chart(events = list(load = 'function() {this.table = this.renderer.table(180, 240).css({fontSize: "10px", color: "#ffffff"}).add().toFront();}')) %>%
+  hc_chart(renderTo = "tabella_container") %>%
+  hc_add_series(table = list(
+    table = mls_sttp[, c("Team", "Season", "Pts", "W", "GF")],
+    startRow = 1,
+    endRow = nrow(mls_sttp),
+    startColumn = 0,
+    endColumn = 4
+  )) %>%
+  hc_credits(enabled = TRUE, text = '@wildjang')
+  #theme_fivethirtyeight() 
+
+
+
+
+library(highcharter)
+
+# Creazione del grafico interattivo con geom_point e tabella
+titoli_plotppl <- mls_sttp %>%
+  filter(Titoli > 0) %>%
+  hchart('point', hcaes(x = Team, y = Titoli, color = Titoli)) %>%
+  hc_title(text = "Titoli vinti da ogni squadra") %>%
+  hc_xAxis(categories = mls_sttp$Team) %>%
+  hc_yAxis(title = list(text = "Numero di Titoli")) %>%
+  hc_tooltip(pointFormat = '<b>{point.Team}</b><br>Titoli: {point.y}<br>Stagione: {point.Season}<br>Punti: {point.Pts}<br>Vittorie: {point.W}<br>Gol fatti: {point.GF}') %>%
+  hc_chart(events = list(load = 'function() {this.table = this.renderer.table(180, 240).css({fontSize: "10px", color: "#ffffff"}).add().toFront();}')) %>%
+  hc_chart(renderTo = "tabella_container") %>%
+  hc_add_series(table = list(
+    table = mls_sttp[, c("Team", "Season", "Pts", "W", "GF")],
+    startRow = 1,
+    endRow = nrow(mls_sttp),
+    startColumn = 0,
+    endColumn = 4
+  )) %>%
+  hc_credits(enabled = TRUE, text = '@wildjang')
+
+
+
+library(dplyr)
+
+# Calcolare la media dei Pts, W e GF per ogni team
+team_stats <- mls_standings %>%
+  group_by(Team) %>%
+  summarise(
+    Pos = first(Pos),
+    PuntiMedio = mean(Pts),
+    WMedio = mean(W),
+    GFMedio = mean(GF),
+    Titoli = sum(Pos == 1)
+  )
+
+# Visualizzare il risultato
+print(team_stats)
+```
+
+
+```{r}
+
+library(tidyverse)
+# Calcola il numero di titoli per ogni squadra
+titoli_per_squadra <- vincitori_per_stagione %>%
+  group_by(Team) %>%
+  summarise(Titoli = n())
+
+# Unisci i dati in summary_datalolp
+summary_datalolp <- left_join(summary_datalolp, titoli_per_squadra, by = "Team")
+
+
+# Imposta i valori mancanti (NA) nella colonna "Titoli" a 0
+summary_datalolp$Titoli[is.na(summary_datalolp$Titoli)] <- 0
+
+# Rimuovi la colonna "Pos" da summary_datalolp
+summary_datalolp <- select(summary_datalolp, -Pos)
+
+# Visualizza il risultato
+summary_datalolp
+
+
+# Creazione del grafico interattivo con geom_point
+titoli_plo <- summary_datalolp %>%
+  hchart('point', hcaes(x = Team, y = Titoli, color = Pts)) %>%
+  hc_title(text = "Titoli vinti da ogni squadra") %>%
+  hc_xAxis(categories = summary_datalolp$Team) %>%
+  hc_yAxis(title = list(text = "Numero di Titoli")) %>%
+  hc_tooltip(pointFormat = '<b>{point.Team}</b><br>Titoli: {point.y}<br>Stagione: {point.Season}<br>Punti: {point.Pts}<br>Vittorie: {point.W}<br>Gol fatti: {point.GF}') %>%
+  hc_credits(enabled = TRUE, text = '@tuo_nome_utente')
+
+
+library(shiny)
+
+# Creazione del grafico interattivo con geom_point
+titoli_plop <- summary_datalolp %>%
+  hchart('point', hcaes(x = Team, y = Titoli, size = Pts, color = W)) %>%
+  hc_title(text = "Titoli vinti da ogni squadra") %>%
+  hc_xAxis(categories = summary_datalolp$Team) %>%
+  hc_yAxis(title = list(text = "Numero di Titoli")) %>%
+  hc_size()  %>%
+  hc_tooltip(pointFormat = '<b>{point.Team}</b><br>Titoli: {point.y}<br>Stagione: {point.Season}<br>Punti: {point.Pts}<br>Vittorie: {point.W}<br>Gol fatti: {point.GF}') %>%
+  #hc_theme(theme = "sand-signika") %>%
+   hc_credits(enabled = TRUE, text = '@wildjang')%>%
+   hc_legend()
+
+
+# Aggiungi un glossario riasuntivo vicino al grafico
+glossariol <- tags$div(
+  tags$h4("Glossario Riasuntivo"),
+  tags$p("Il grafico mostra il numero di titoli vinti da ogni squadra. Ogni punto rappresenta una squadra e la sua posizione sul grafico è determinata dal numero di titoli vinti."),
+  tags$p("La dimensione del punto è proporzionale al numero di punti totali ottenuti dalla squadra, mentre il colore del punto rappresenta anch'esso il numero di punti."),
+  tags$p("Scorrendo il grafico, è possibile identificare facilmente le squadre che hanno ottenuto più titoli e valutare la loro prestazione complessiva.")
+)
+
+# Combinazione di grafico e glossario in un'unica visualizzazione
+final_output <- fluidRow(
+  column(9, titoli_plop),
+  column(3, glossario)
+)
+
+
+# Aggiungi un glossario riasuntivo vicino al grafico
+glossario <- tags$div(
+  tags$p("Il grafico mostra il numero di titoli vinti da ogni squadra, con la dimensione del punto proporzionale al numero di punti ottenuti."),
+  tags$p("I colori dei punti rappresentano anche il numero di punti.")
+)
+
+# Combinazione di grafico e glossario in un'unica visualizzazione
+final_output <- fluidRow(
+  column(9, titoli_plop),
+  column(3, glossario)
+)
+
+
+# Combinazione di grafico e glossario in un'unica visualizzazione
+final_outputp <- fluidRow(
+  column(9, titoli_plop),
+  column(3, glossariol)
+)
+# Visualizza l'output
+final_output
+
+
+
+# Rinomina la colonna "Pts" di summary_datalo in "Pts_TOT"
+summary_datalo <- rename(summary_datalo, Pts_TOT = Pts)
+# Creazione del modello lineare
+
+# Unisci i dati
+summary_datalolp <- left_join(summary_datalolp, summary_datalo[, c("Team", "Pts_TOT")], by = "Team")
+
+modello_regressione <- lm(Season_max_Pts ~ Pts_TOT , data = summary_datalolp)
+
+# Valutazione del modello
+summary(modello_regressione)
+
+plot(modello_regressione)
+
+
+
+# Carica le librerie
+library(tidymodels)
+
+# Creazione del dataframe con i dati di allenamento
+training_data <- summary_datalolp %>% select(Pts, W, GF, VolteMLS, Titoli)
+
+# Creazione del modello lineare
+linear_model <- lm(Pts ~ W + GF + VolteMLS + Titoli, data = training_data)
+
+# Visualizzazione dei risultati del modello
+summary(linear_model)
+ 
