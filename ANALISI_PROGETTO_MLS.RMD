@@ -1,0 +1,730 @@
+---
+title: "Analisi della MLS DA 2000 A 2022"
+author: "WILLY DJANGANG"
+date: "2024-01-28"
+output: 
+   ioslides_presentation:
+    widescreen: true
+    css: "custom.css"
+---
+
+```{r setup, include=FALSE, eval=TRUE}
+
+knitr::opts_chunk$set(echo = FALSE, out.width = "92%")
+
+library(ggplot2)
+library(ggplotify)
+library(plotly)
+library(tidyverse)
+library(ggimage)
+library(magick)
+library(ggthemes)
+library(gapminder)
+library(readxl)
+library(ggtext)
+library(viridis)
+library(RColorBrewer)
+library(highcharter)
+
+#"Importazione dei dati".
+
+mls_standings <- read.csv("W:/FONDAMENTI DEI DATI/mls standings/mls_standings.csv")
+
+
+
+ mls_mod <- read_excel("W:/FONDAMENTI DEI DATI/mls mod.xlsx")
+
+
+mls_st <- merge(mls_standings, mls_mod, by = "Team", all.x = TRUE, all.y = TRUE)
+mls_st <- na.omit(mls_st)
+
+```
+
+## Dataset utilizzati
+
+[**MLS STANDINGS**](https://www.kaggle.com/datasets/abbymiles27/mls-standings-2000-2022) **Il dataframe mls_standings contiene i risultati delle partite di Major League Soccer (MLS) per le stagioni 2000-2022. Ogni riga del dataframe rappresenta una squadra, mentre le colonne rappresentano le statistiche delle partite giocate, come la stagione (Season), la posizione nella classifica (Pos), il nome della squadra (Team), i punti (Pts), i punti per partita (PPG), le partite giocate (GP), le vittorie (W), le sconfitte (L), i pareggi (D), i gol fatti (GF), i gol subiti (GA) e la differenza reti (GD). Il dataframe contiene un totale di 396 osservazioni (rappresentanti le squadre per ogni stagione) e 12 variabili (le colonne).**
+
+-   401 righe e 12 colonne
+-   le statistiche delle partite giocate delle diversi squadre immersi della MAJOR LEAGUE SOCCER[2000-2022] \*\*
+
+[**MLS_mod:**](%22W:/FONDAMENTI%20DEI%20DATI/mls%20mod.xlsx%22) Invece questo rappresenta le informazioni spaziale e geoonline delle squadre
+
+\*\* Il secondo dataset rappresenta informazioni spaziali e geografiche delle squadre, presentando una tabella con 29 righe e 6 colonne. Le informazioni includono la città e la regione di ogni squadra, l'anno di fondazione, l'anno di ingresso nel campionato, e vari link alle foto e siti web delle squadre. \*\*
+
+## Motivazione e Domande POSTI
+
+\*\* Motivazione \*\* La Major League Soccer (MLS) è diventata un campionato in crescita e competitivo, con una rivalità sempre più intensa tra le squadre e un costante miglioramento del livello di gioco. Questo è simile a quanto si osserva nei campionati europei, dove spesso si osserva una forte rivalità e una lotta competitiva tra le squadre fino all'ultima giornata. La MLS offre la possibilità di partite combattute e incerte fino all'ultima giornata, e la presenza di stelle del calcio mondiale rende il campionato appassionante e coinvolgente da seguire.
+
+\*\* Le domande che mi sono posto \*\*
+
+## **Evoluzione del Numero di Partecipanti nelle Stagioni della MLS**
+
+```{r , message=FALSE, echo = FALSE}
+
+numero_squadre_per_stagionel <- mls_standings %>%
+  group_by(Season) %>%
+  summarize(NumeroSquadre = n_distinct(Team))
+
+barplot_squadre_per_stagionel <- ggplot(numero_squadre_per_stagionel, aes(x = Season, y = NumeroSquadre, fill = Season)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Andamento del Numero di Squadre per Stagione nella Major League Soccer (MLS)",
+       x = "Stagione", y = "Numero di Squadre") +
+  theme_fivethirtyeight()
+barplot_squadre_per_stagionel
+```
+
+
+
+## Clustering delle stagioni
+
+```{r}
+
+
+
+# D a questo grafico generalizzato si vede che ci sono 3 cluster differenziate dalla distribuzione normali. Tali che le stagione da 2000 a 2008 seguono una..  
+observp = mls_standings %>%
+  ggplot(aes(x = Team,
+             y = Pts,
+             size = W,
+             color = as.factor(Season))) +
+  geom_point() +
+  facet_wrap(~Season) +
+  scale_color_manual(values = c("blue", "blue", "blue", "blue", "blue", "blue", "blue", "blue",  # Da 2000 a 2008: blu
+                                "red", "red", "red", "red", "red", "red", "red", "red",  # Da 2009 a 2016: rosso
+                                "green", "green", "green", "green", "green", "green", "green", "green"),  # Da 2017 in poi: verde
+                     name = "Stagione") +
+  labs(title = "Andamento delle squadre basato sui punti raggruppati per cluster annui",
+       x = "Punti di Ogni Team",
+       y = "Squadra")
+observp
+
+numero_squadre_per_stagioneo <- na.omit(numero_squadre_per_stagionel)
+
+dati_clusteringl <- numero_squadre_per_stagioneo[, c("Season", "NumeroSquadre")]
+
+
+
+# Utilizza il k-means clustering
+set.seed(123)  # Per rendere i risultati riproducibili
+kmeans_modelc <- kmeans(dati_clusteringl, centers = 3)  # Specifica il numero di cluster desiderati
+
+
+
+# Aggiungi le informazioni di clustering al dataframe originale
+dati_clusteringl$Cluster <- as.factor(kmeans_modelc$cluster)
+
+# Visualizza il risultato del clustering
+cluster_STAGIONElo <- ggplot(dati_clusteringl, aes(x = Season, y = NumeroSquadre, color = Cluster)) +
+  geom_point() +
+  geom_text(aes(label = as.character(Season)), vjust = -0.5, position = position_dodge(0.9), size = 3) +
+  labs(title = "Clustering delle Stagioni in Base al Numero di Squadre",
+       x = "Stagione", y = "Numero di Squadre") +
+  theme_fivethirtyeight()
+cluster_STAGIONElo
+
+
+
+
+```
+
+## Analisi
+
+```{r}
+
+
+# Seleziona le tuple con stagione da 2000 a 2008
+subset_2000_2008p <- filter(mls_standings, Season >= 2000 & Season <= 2008)
+#subset_2000_2008pl <- filter(mls_standings, Season <= 2000 & Season <= 2008)
+
+# Seleziona le tuple con stagione da 2009 a 2016
+subset_2009_2016p <- filter(mls_standings, Season >= 2009 & Season <= 2016)
+
+#SUBS <- mls_standings %>%
+  # filter(mls_standings$Team == "MIA")
+
+# Seleziona le tuple con stagione da 2017 a 2020
+subset_2017_2022p <- filter(mls_standings, Season >= 2017 & Season <= 2022)
+
+
+highchart_chart_2000_2008p <- highchart() %>%
+  hc_chart(type = "scatter") %>%
+  hc_title(text = "Andamento delle squadre 2000-2008") %>%
+  hc_xAxis(categories = subset_2000_2008p$Team) %>%
+  hc_yAxis(title = list(text = "Punti di ogni Team")) %>%
+  hc_add_series(
+    data = subset_2000_2008p,
+    hcaes(x = Team, y = Pts, size = W, color = GF),
+    type = "scatter",
+    name = "Punti"
+  ) %>%
+  hc_tooltip(pointFormat = '<b>{point.Team}</b><br>Punti: {point.y}<br>Stagione: {point.Season}<br>Posizione: {point.Pos}  <br>GOAL SEGNATI: {point.GF} <br>Partite vinte: {point.W}')
+
+
+highchart_chart_2000_2008p
+
+
+# Convertire il grafico ggplot in highchart
+highchart_chart_2009_2016p <- highchart() %>%
+  hc_chart(type = "scatter") %>%
+  hc_title(text = "Andamento delle squadre 2009-2016") %>%
+  hc_xAxis(categories = subset_2009_2016p$Team) %>%
+  hc_yAxis(title = list(text = "Punti di ogni Team")) %>%
+  hc_add_series(
+    data = subset_2009_2016p,
+    hcaes(x = Team, y = Pts, size = W, color = GF),
+    type = "scatter",
+    name = "Punti"
+  ) %>%
+  hc_tooltip(pointFormat = '<b>{point.Team}</b><br>Punti: {point.y}<br>Stagione: {point.Season} <br>Partite vinte: {point.W}') %>%
+  hc_legend(enabled = TRUE) %>%
+  hc_credits(enabled = TRUE, text = 'Crediti: @wildjang') %>%
+  hc_theme(theme = "ggplot2") 
+
+highchart_chart_2009_2016p
+
+
+# Convertire il grafico ggplot in highchart
+highchart_chart_2017_2022p <- highchart() %>%
+  hc_chart(type = "scatter") %>%
+  hc_title(text = "Andamento delle squadre 2017-2022") %>%
+  hc_xAxis(categories = subset_2017_2022p$Team) %>%
+  hc_yAxis(title = list(text = "Punti di ogni Team")) %>%
+  hc_add_series(
+    data = subset_2017_2022p,
+    hcaes(x = Team, y = Pts, size = W, color = GF),
+    type = "scatter",
+    name = "Punti"
+  ) %>%
+  hc_tooltip(pointFormat = '<b>{point.Team}</b><br>Punti: {point.y}<br>Stagione: {point.Season} <br>Partite vinte: {point.W}') %>%
+  hc_legend(enabled = TRUE) %>%
+  hc_credits(enabled = TRUE, text = 'Crediti: @wildjang') %>%
+  hc_theme(theme = "darkunica") 
+
+highchart_chart_2017_2022p
+
+```
+
+## Analisi 2 
+
+```{r , message=FALSE, echo = FALSE}
+
+# Funzione per calcolare la media basata sul numero di volte
+media1 <- function(x, weights) {
+  sum(x * weights) / sum(weights)
+}
+
+# Seleziona le colonne di interesse
+colonne_interesse <- c("Pts", "Pos", "W", "GF", "PPG")
+
+summary_datalolp <- mls_standings %>%
+  group_by(Team, Season) %>%
+  summarise(across(all_of(colonne_interesse), mean)) %>%
+  group_by(Team) %>%
+  summarise(
+    Pts = max(Pts),  # Calcola il massimo per la colonna "Pts"
+     Season_max_Pts = Season[which.max(Pts)],  # Aggiungi la colonna "Season" corrispondente al massimo punteggio
+    across(all_of(colonne_interesse[-which(colonne_interesse == "Pts")]), ~ media1(., length(unique(Season)))),
+    VolteMLS = sum(length(unique(Season)))  # Somma totale delle partecipazioni
+  )
+
+
+
+# Applica la funzione media1 alle colonne di interesse
+summary_datalo <- mls_st %>%
+  group_by(Team, Season) %>%
+  summarise(across(all_of(colonne_interesse), mean)) %>%
+  group_by(Team) %>%
+  summarise(
+    across(all_of(colonne_interesse), ~ media1(., length(unique(Season)))),
+    VolteMLS = sum(length(unique(Season)))  # Somma totale delle partecipazioni
+  )
+
+library(ggvis)
+ 
+ mls_stp = mls_st %>%
+   group_by(city) %>%
+   ggvis(~city, ~Pts, fill = ~city) %>%
+   ggvis::layer_boxplots()
+ 
+ 
+ 
+ 
+library(dplyr)
+
+# Calcola la media per ogni squadra nelle colonne Pts, PPG e W
+subset_2000_2008pl <- subset_2000_2008p %>%
+  group_by(Team) %>%
+  summarise(
+    Media_Pts = mean(Pts),
+    Media_PPG = mean(PPG),
+    Media_W = mean(W),
+    Media_GF = mean(GF)
+  )
+
+# Calcola il rango basato sulla media dei punti
+subset_2000_2008plL <- subset_2000_2008pl %>%
+  arrange(desc(Media_Pts)) %>%
+  mutate(Rank = row_number())
+
+# Seleziona le prime 5 squadre per ogni stagione in base al rango
+top5_2000_2008pl <- subset_2000_2008plL %>%
+  filter(Rank <= 5)
+
+library(dplyr)
+
+# Calcola il massimo dei punti e la stagione corrispondente per ogni squadra
+max_pts_season <- subset_2000_2008p %>%
+  group_by(Team) %>%
+  summarise(
+    Max_Pts = max(Pts),
+    Season_Max_Pts = Season[which.max(Pts)]
+  )
+
+# Uniscilo con il dataframe top5_2000_2008
+top5_2000_2008m <- top5_2000_2008pl %>%
+  left_join(max_pts_season, by = "Team")
+
+# Visualizza il risultato
+print(top5_2000_2008m)
+
+
+#Si nota che all'andamento del tempo la difficolta di stare tramite i primi/ essere campioni è dura perché da 2000 a 2008 abbiamo 
+
+
+library(dplyr)
+
+# Calcola la media per ogni squadra nelle colonne Pts, PPG e W
+subset_2009_2016pl <- subset_2009_2016p %>%
+  group_by(Team) %>%
+  summarise(
+    Media_Pts = mean(Pts),
+    Media_PPG = mean(PPG),
+    Media_W = mean(W),
+    Media_GF = mean(GF)
+  )
+
+# Calcola il rango basato sulla media dei punti
+subset_2009_2016plL <- subset_2009_2016pl %>%
+  arrange(desc(Media_Pts)) %>%
+  mutate(Rank = row_number())
+
+# Seleziona le prime 5 squadre per ogni stagione in base al rango
+top5_2009_2016pl <- subset_2009_2016plL %>%
+  filter(Rank <= 5)
+
+# Calcola il massimo dei punti e la stagione corrispondente per ogni squadra
+max_pts_season_09_16 <- subset_2009_2016p %>%
+  group_by(Team) %>%
+  summarise(
+    Max_Pts = max(Pts),
+    Season_Max_Pts = Season[which.max(Pts)]
+  )
+
+# Uniscilo con il dataframe top5_2000_2008
+top5_2009_2016m <- top5_2009_2016pl %>%
+  left_join(max_pts_season_09_16, by = "Team")
+
+# Visualizza il risultato
+print(top5_2009_2016m)
+```
+
+## COMPORTAMENTO DELLE SQUADRE MIGLIORE DEI DIVERSI CLUSTERS
+```{r}
+library(dplyr)
+
+# Calcola la media per ogni squadra nelle colonne Pts, PPG e W
+subset_2017_2022pl <- subset_2017_2022p %>%
+  group_by(Team) %>%
+  summarise(
+    Media_Pts = mean(Pts),
+    Media_PPG = mean(PPG),
+    Media_W = mean(W),
+    Media_GF = mean(GF)
+  )
+
+# Calcola il rango basato sulla media dei punti
+subset_2017_2022plL <- subset_2017_2022pl %>%
+  arrange(desc(Media_Pts)) %>%
+  mutate(Rank = row_number())
+
+# Seleziona le prime 5 squadre per ogni stagione in base al rango
+top5_2017_2022pl <- subset_2017_2022plL %>%
+  filter(Rank <= 5)
+
+# Calcola il massimo dei punti e la stagione corrispondente per ogni squadra
+max_pts_season_17_22 <- subset_2017_2022p %>%
+  group_by(Team) %>%
+  summarise(
+    Max_Pts = max(Pts),
+    Season_Max_Pts = Season[which.max(Pts)]
+  )
+
+# Uniscilo con il dataframe top5_2000_2008
+top5_2017_2022m <- top5_2017_2022pl %>%
+  left_join(max_pts_season_17_22, by = "Team")
+
+# Visualizza il risultato
+print(top5_2017_2022m)
+
+
+library(plotly)
+
+# Converti la colonna Season_Max_Pts in un fattore per ordinare correttamente sull'asse x
+top5_2000_2008m$Season_Max_Pts <- factor(top5_2000_2008m$Season_Max_Pts, levels = unique(top5_2000_2008m$Season_Max_Pts))
+
+library(highcharter)
+library(highr)
+# Creazione del grafico interattivo direttamente con la sintassi di Highcharter
+highchart_plot1 <- plot_ly(top5_2000_2008m, x = ~Team, y = ~Media_Pts, type = 'scatter', mode = 'markers',
+                           text = ~paste("Season_Max_Pts: ", Season_Max_Pts, "<br>Rango: ", Rank, "<br>Punto max: ", Max_Pts, "<br> Media_GF: ", Media_GF),
+                           marker = list(size = ~Media_GF, color = ~Max_Pts, colorscale = 'Viridis')) %>%
+  layout(title = "Top 5 Squadre (2000-2008)",
+         xaxis = list(title = "Stagione Max Pts"),
+         yaxis = list(title = "Media Punti"),
+         hovermode = "closest") 
+# Visualizzazione del grafico Highcharter
+highchart_plot1
+
+
+# Creazione del grafico interattivo direttamente con la sintassi di Highcharter
+highchart_plot2 <- plot_ly(top5_2009_2016m, x = ~Team, y = ~Media_Pts, type = 'scatter', mode = 'markers',
+                           text = ~paste("Season_Max_Pts: ", Season_Max_Pts, "<br>Rango: ", Rank, "<br>Punto max: ", Max_Pts, "<br> Media_GF: ", Media_GF),
+                           marker = list(size = ~Media_GF, color = ~Max_Pts, colorscale = 'Viridis')) %>%
+  layout(title = "Top 5 Squadre (2000-2008)",
+         xaxis = list(title = "Stagione Max Pts"),
+         yaxis = list(title = "Media Punti"),
+         hovermode = "closest") 
+# Visualizzazione del grafico Highcharter
+highchart_plot2
+
+# Creazione del grafico interattivo direttamente con la sintassi di Highcharter
+highchart_plot3 <- plot_ly(top5_2017_2022m, x = ~Team, y = ~Media_Pts, type = 'scatter', mode = 'markers',
+                           text = ~paste("Season_Max_Pts: ", Season_Max_Pts, "<br>Rango: ", Rank, "<br>Punto max: ", Max_Pts, "<br> Media_GF: ", Media_GF),
+                           marker = list(size = ~Media_GF, color = ~Max_Pts, colorscale = 'Viridis')) %>%
+  layout(title = "Top 5 Squadre (2000-2008)",
+         xaxis = list(title = "Stagione Max Pts"),
+         yaxis = list(title = "Media Punti"),
+         hovermode = "closest") 
+# Visualizzazione del grafico Highcharter
+highchart_plot3
+
+library(highcharter)
+
+
+
+
+# Visualizzazione dei grafici Highcharter insieme
+par(mfrow=c(1,3))
+highchart_plot1
+highchart_plot2
+highchart_plot3
+
+
+
+```
+
+## COME FANNO LE SQUADRE PER VINCERE , IL LORO METODO
+
+
+```{r}
+
+
+# Raggruppa per squadra e controlla il numero di tornei vinti
+tornei_vinti <- mls_standings %>%
+  group_by(Team) %>%
+  summarize(TorneiVinti = sum(Pos == 1))
+
+# Raggruppa per squadra e calcola le statistiche desiderate
+statistiche_squadra <- mls_standings %>%
+  group_by(Team) %>%
+  summarize(
+    TorneiVinti = sum(Pos == 1),
+    PuntoMedio = mean(Pts),
+    GoalForMedio = mean(GF),
+    PartiteVinte = sum(W),
+    StagioneMaxPunti = Season[which.max(Pts)],
+    MediaPPG = mean(PPG)
+  )
+
+# Arrotonda le medie a due decimali
+statistiche_squadra$PuntoMedio <- round(statistiche_squadra$PuntoMedio, 2)
+statistiche_squadra$GoalForMedio <- round(statistiche_squadra$GoalForMedio, 2)
+statistiche_squadra$PartiteVinte <- round(statistiche_squadra$PartiteVinte, 2)
+statistiche_squadra$MediaPPG <- round(statistiche_squadra$MediaPPG, 2)
+  
+color1 = c("#B30000", "#FF6600", "#FFB300", "#8CC63F", "#33A1C9", "#003399", "#660099", "#FF007F", "#00CC99", "#009999", "#CC0066", "#FFCC90", "grey")
+
+library(highcharter)
+library(tidyverse)
+titoli_plotppl1 <- statistiche_squadra %>%
+  filter(TorneiVinti > 0) %>%
+  hchart('point', hcaes(x = Team, y = TorneiVinti , size = PartiteVinte, color = color1)) %>%
+  hc_title(text = "Titoli vinti da ogni squadra") %>%
+ # hc_xAxis(categories = Team) %>%
+  hc_yAxis(title = list(text = "Numero di Titoli")) %>%
+  hc_tooltip(pointFormat = '<b>{point.Team}</b><br>Titoli: {point.y}<br>Stagione: {point.StagioneMaxPunti}<br>Punti: {point.PuntoMedio}<br>Vittorie: {point.PartiteVinte}<br>Gol fatti: {point.GoalForMedio}') %>%
+  hc_legend(
+    align = "left",
+    verticalAlign = "top",
+    layout = "vertical",
+    x = 0,
+    y = 100
+  ) %>%
+  hc_credits(enabled = TRUE, text = '@wildjang')
+
+
+# Ordina il dataframe in base al numero di tornei vinti
+statistiche_squadral <- statistiche_squadra %>%
+  arrange(desc(TorneiVinti))
+
+# Crea un nuovo dataframe per le etichette dell'asse x
+etichette_ascisse <- data.frame(
+  Team = statistiche_squadral$Team,
+  stringsAsFactors = FALSE
+)
+
+# Aggiungi l'etichetta dell'asse x come factor
+statistiche_squadra <- left_join(statistiche_squadral, etichette_ascisse, by = "Team")
+
+# Crea il grafico a dispersione
+titoli_plotppl12 <- statistiche_squadral %>%
+  filter(TorneiVinti > 0) %>%
+  hchart('point', hcaes(x = as.factor(Team), y = TorneiVinti, size = PartiteVinte, color = TorneiVinti)) %>%
+  hc_title(text = "Titoli vinti da ogni squadra") %>%
+  hc_xAxis(categories = statistiche_squadra$Team) %>%
+  hc_yAxis(title = list(text = "Numero di Titoli")) %>%
+  hc_tooltip(pointFormat = '<b>{point.Team}</b><br>Titoli: {point.y}<br>Punti Medio: {point.PuntoMedio}<br>Goal For Medio: {point.GoalForMedio}<br>Stagione Max Punti: {point.StagioneMaxPunti}<br>Media PPG: {point.MediaPPG}') %>%
+  hc_legend(
+    align = "left",
+    verticalAlign = "top",
+    layout = "vertical",
+    x = 0,
+    y = 100
+  ) %>%
+  hc_credits(enabled = TRUE, text = '@wildjang')
+```
+
+
+## LE CITTA MIGLIORI DI OGNI PERIODO 
+
+
+```{r}
+
+custom1 = viridis::plasma(n = 6)
+custom2l = viridis::plasma(n = 6)
+custom3l = viridis::plasma(n = 5)
+
+
+top5l_2000_2008 <- subset(mls_st, Season >= 2000 & Season <= 2008 & Pos <= 5)
+top5l_2009_2016 <- subset(mls_st, Season >= 2009 & Season <= 2016 & Pos <= 5)
+top5l_2017_2022 <- subset(mls_st, Season >= 2017 & Season <= 2022 & Pos <= 5)
+
+# ***** 
+  # DA 2000 A 2008
+# Filtra le squadre che sono state primi
+prime_squadre <- top5l_2000_2008 %>%
+  filter(Pos == 1)
+
+library(highcharter)
+# Conta il numero di volte che ciascuna città è stata in prima posizione
+conteggio_per_citta <- prime_squadre %>%
+  group_by(city) %>%
+  summarise(NumVolte = n())
+
+# Crea un grafico a torta
+grafico_torta1 <- conteggio_per_citta %>% 
+  hchart('pie', hcaes(x = city, y = NumVolte, color = custom1, label = NULL)) %>%
+   hc_tooltip(pointFormat = '<b> Proportion: </b> {point.percentage:,.2f}%') %>%
+  hc_title(text = "Numero di volte in cui le città sono state in prima posizione", style = list(fontSize = '15px', fontWeight = 'bold')) %>%
+  hc_legend(enabled = TRUE, text = '@wildjang')
+
+# Visualizza il grafico a torta
+print(grafico_torta1)
+
+
+
+
+# Filtra le squadre che sono state primi
+prime_squadre2 <- top5l_2009_2016 %>%
+  filter(Pos == 1)
+
+library(highcharter)
+# Conta il numero di volte che ciascuna città è stata in prima posizione
+conteggio_per_citta2 <- prime_squadre2 %>%
+  group_by(city) %>%
+  summarise(NumVolte = n())
+
+# Crea un grafico a torta
+grafico_torta2 <- conteggio_per_citta2 %>% 
+  hchart('pie', hcaes(x = city, y = NumVolte, color = custom2l, label = NULL)) %>%
+   hc_tooltip(pointFormat = '<b> Proportion: </b> {point.percentage:,.2f}%') %>%
+  hc_title(text = "Numero di volte in cui le città sono state in prima posizione", style = list(fontSize = '15px', fontWeight = 'bold')) %>%
+  hc_legend(enabled = TRUE, text = '@wildjang')
+
+# Visualizza il grafico a torta
+print(grafico_torta2)
+
+
+# Filtra le squadre che sono state primi
+prime_squadre3 <- top5l_2017_2022 %>%
+  filter(Pos == 1)
+
+library(highcharter)
+# Conta il numero di volte che ciascuna città è stata in prima posizione
+conteggio_per_citta3 <- prime_squadre3 %>%
+  group_by(city) %>%
+  summarise(NumVolte = n())
+
+# Crea un grafico a torta
+grafico_torta3 <- conteggio_per_citta3 %>% 
+  hchart('pie', hcaes(x = city, y = NumVolte, color = custom3l, label = NULL)) %>%
+   hc_tooltip(pointFormat = '<b> Proportion: </b> {point.percentage:,.2f}%') %>%
+  hc_title(text = "Numero di volte in cui le città sono state in prima posizione", style = list(fontSize = '15px', fontWeight = 'bold')) %>%
+  hc_legend(enabled = TRUE, text = '@wildjang')
+
+# Visualizza il grafico a torta
+print(grafico_torta3)
+
+
+```
+
+
+
+
+
+  Vincitorie della MLS
+
+```{r , message=FALSE, echo = FALSE}
+
+custom <- viridis::mako(n = 23)
+
+merged_data <- inner_join(mls_standings, summary_datalolp, by = "Team")
+
+vincitori_per_stagionep <- merged_data %>%
+  group_by(Season) %>%
+  slice(which.max(Pts.x)) %>%
+  select(Season, Team, Pts.y) %>%
+  arrange(Season)
+
+piechartvincitore <- vincitori_per_stagionep %>%
+  hchart('pie', hcaes(x = Season, y = Team, color = custom)) %>%
+  hc_add_theme(hc_theme_google()) %>%
+  hc_tooltip(pointFormat = '<b>Numero delle Squadre:</b> {point.y} <br>') %>%
+  hc_title(text = "I vincitori della MAJOR LEAGUE SOCCER",
+           style = list(fontSize = '25px', fontWeight = 'bold')) %>%
+  hc_credits(enabled = TRUE, text = '@wildjang')
+
+piechartvincitore
+
+```
+
+
+
+```{r}
+
+custom3 = viridis::magma(n = 13)
+
+
+# Combina i dataframe delle prime 5 squadre di ciascun periodo
+top5l_df <- rbind(top5l_2000_2008, top5l_2009_2016, top5l_2017_2022)
+
+
+# Filtra le squadre che sono state primi
+prime_squadre_top <- top5l_df %>%
+  filter(Pos == 1)
+
+
+# Conta il numero di volte che ciascuna città è stata in prima posizione
+top_conteggio_per_cittal <- prime_squadre_top %>%
+  group_by(city) %>%
+  summarise(NumVolte = n(), Team = paste(unique(Team), collapse = ', '))
+
+
+# Crea un grafico a torta
+grafico_tortapl <- top_conteggio_per_cittal %>% 
+  hchart('pie', hcaes(x = city, y = NumVolte, color = custom3, label = NULL)) %>%
+  hc_plotOptions(
+    pie = list(
+      dataLabels = list(
+        enabled = TRUE,
+        format = '{point.name}: {point.y} - Vincitori: {point.Team}'
+      )
+    )
+  ) %>%
+  hc_tooltip(pointFormat = '<b> Proportion: </b> {point.percentage:,.2f}%') %>%
+  hc_title(text = "Numero di volte in cui le città sono state in prima posizione", style = list(fontSize = '15px', fontWeight = 'bold')) %>%
+  hc_legend(enabled = TRUE, text = '@wildjang')
+
+```
+
+
+
+## Predizione della numerosità delle squadre dei 4 prossimi anni
+
+```{r , message=FALSE, echo = FALSE}
+
+# Calcola il coefficiente di correlazione di Pearson
+
+
+numero_squadre_per_stagionel <- mls_standings %>%
+  group_by(Season) %>%
+  summarize(NumeroSquadre = n_distinct(Team))
+
+# Visualizza il grafico di dispersione o a linee
+ 
+
+numero_squadre_per_stagioneo <- na.omit(numero_squadre_per_stagionel)
+
+# Calcola il coefficiente di correlazione di Pearson
+correlazione <- cor(numero_squadre_per_stagionel$Season, numero_squadre_per_stagionel$NumeroSquadre, use = "complete.obs")
+
+
+# Stampa il coefficiente di correlazione
+ t = print(paste("Coefficiente di correlazione di Pearson:", round(correlazione, 3)))
+ 
+
+# Visualizza il grafico di dispersione o a linee
+ REGRESSIONE_STAGIONE_TEAMlo = ggplot(numero_squadre_per_stagioneo, aes(x = Season, y = NumeroSquadre)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Correlazione tra Stagione e Numero di Squadre",
+       x = "Stagione", y = "Numero di Squadre") +
+  theme_fivethirtyeight()
+
+# Stampa il coefficiente di correlazione
+ t = print(paste("Coefficiente di correlazione di Pearson:", round(correlazione, 3)))
+
+REGRESSIONE_STAGIONE_TEAM = ggplot(numero_squadre_per_stagionel, aes(x = Season, y = NumeroSquadre)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "Correlazione tra Stagione e Numero di Squadre",
+       x = "Stagione", y = "Numero di Squadre") +
+  theme_minimal()
+
+REGRESSIONE_STAGIONE_TEAM
+
+# Supponendo che tu abbia una variabile di regressione chiamata 'Season' nel tuo dataset
+modello_reg <- lm(NumeroSquadre ~ Season, data = numero_squadre_per_stagionel)
+
+# Crea un dataframe con le stagioni desiderate
+predizioni_df <- data.frame(Season = c(2023, 2024,2025,2026))
+
+# Prevedi il numero di squadre usando il modello
+predizioni_df$NumeroSquadre_Predette <- predict(modello_reg, newdata = predizioni_df)
+
+# Visualizza le predizioni
+print(predizioni_df)
+```
+
+## Conclusioni 
+
+Dai grafici ottenuti abbiamo ricavato i seguenti risultati:
+```{r}
+
+```
+
+
+
+
+
+
