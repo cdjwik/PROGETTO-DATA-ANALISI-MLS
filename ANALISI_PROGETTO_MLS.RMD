@@ -1,8 +1,9 @@
 ---
 title: "Analisi della MLS DA 2000 A 2022"
 author: "WILLY DJANGANG"
-date: "2024-01-28"
+date: "2024-02-01"
 output: 
+   slidy_presentation: default
    ioslides_presentation:
     widescreen: true
     css: "custom.css"
@@ -25,6 +26,9 @@ library(ggtext)
 library(viridis)
 library(RColorBrewer)
 library(highcharter)
+library(patchwork)
+library(ggvis)
+library(highr)
 
 #"Importazione dei dati".
 
@@ -42,22 +46,37 @@ mls_st <- na.omit(mls_st)
 
 ## Dataset utilizzati
 
-[**MLS STANDINGS**](https://www.kaggle.com/datasets/abbymiles27/mls-standings-2000-2022) **Il dataframe mls_standings contiene i risultati delle partite di Major League Soccer (MLS) per le stagioni 2000-2022. Ogni riga del dataframe rappresenta una squadra, mentre le colonne rappresentano le statistiche delle partite giocate, come la stagione (Season), la posizione nella classifica (Pos), il nome della squadra (Team), i punti (Pts), i punti per partita (PPG), le partite giocate (GP), le vittorie (W), le sconfitte (L), i pareggi (D), i gol fatti (GF), i gol subiti (GA) e la differenza reti (GD). Il dataframe contiene un totale di 396 osservazioni (rappresentanti le squadre per ogni stagione) e 12 variabili (le colonne).**
+[**MLS STANDINGS**](https://www.kaggle.com/datasets/abbymiles27/mls-standings-2000-2022) **Il dataframe mls_standings contiene i risultati delle partite di Major League Soccer (MLS) per le stagioni 2000-2022. 
 
 -   401 righe e 12 colonne
 -   le statistiche delle partite giocate delle diversi squadre immersi della MAJOR LEAGUE SOCCER[2000-2022] \*\*
 
-[**MLS_mod:**](%22W:/FONDAMENTI%20DEI%20DATI/mls%20mod.xlsx%22) Invece questo rappresenta le informazioni spaziale e geoonline delle squadre
+[**MLS_mod:**](%22W:/FONDAMENTI%20DEI%20DATI/mls%20mod.xlsx%22) 
 
 \*\* Il secondo dataset rappresenta informazioni spaziali e geografiche delle squadre, presentando una tabella con 29 righe e 6 colonne. Le informazioni includono la città e la regione di ogni squadra, l'anno di fondazione, l'anno di ingresso nel campionato, e vari link alle foto e siti web delle squadre. \*\*
 
 ## Motivazione e Domande POSTI
 
-\*\* Motivazione \*\* La Major League Soccer (MLS) è diventata un campionato in crescita e competitivo, con una rivalità sempre più intensa tra le squadre e un costante miglioramento del livello di gioco. Questo è simile a quanto si osserva nei campionati europei, dove spesso si osserva una forte rivalità e una lotta competitiva tra le squadre fino all'ultima giornata. La MLS offre la possibilità di partite combattute e incerte fino all'ultima giornata, e la presenza di stelle del calcio mondiale rende il campionato appassionante e coinvolgente da seguire.
+ Motivazione 
+ 
+La Major League Soccer (MLS) è diventata un campionato in crescita e competitivo, con una rivalità sempre più intensa tra le squadre e un costante miglioramento del livello di gioco. Questo è simile a quanto si osserva nei campionati europei, dove spesso si osserva una forte rivalità e una lotta competitiva tra le squadre fino all'ultima giornata. La MLS offre la possibilità di partite combattute e incerte fino all'ultima giornata, e la presenza di stelle del calcio mondiale rende il campionato appassionante e coinvolgente da seguire.
 
-\*\* Le domande che mi sono posto \*\*
 
-## **Evoluzione del Numero di Partecipanti nelle Stagioni della MLS**
+**  Le domande che mi sono posto **
+
+1.    Come è cambiato il numero di squadre partecipanti nella MLS nel corso degli anni?
+        -Si puo esistere dei cluster?
+2.     Come si comporta le diverse squadre durante il campionato
+        -Per Ogni cluster temporale
+3.     Quali sono le migliori titolari del Campionato americano?
+          -Per Ogni cluster temporale
+4.    Quali sono le città con le migliore squadre da 2000 a 2022
+     
+     
+
+##  Come è cambiato il numero di squadre partecipanti nella MLS nel corso degli anni?
+
+**Evoluzione del Numero di Partecipanti nelle Stagioni della MLS**
 
 ```{r , message=FALSE, echo = FALSE}
 
@@ -68,47 +87,27 @@ numero_squadre_per_stagionel <- mls_standings %>%
 barplot_squadre_per_stagionel <- ggplot(numero_squadre_per_stagionel, aes(x = Season, y = NumeroSquadre, fill = Season)) +
   geom_bar(stat = "identity") +
   labs(title = "Andamento del Numero di Squadre per Stagione nella Major League Soccer (MLS)",
-       x = "Stagione", y = "Numero di Squadre") +
-  theme_fivethirtyeight()
+       x = "Stagione", y = "Numero di Squadre") 
 barplot_squadre_per_stagionel
 ```
 
 
 
 ## Clustering delle stagioni
+ 
+ **Da questa osservazione si puo andare a cercare dei cluster in funzione di numeroSquadre, visto che piu ci sono delle SQUADRE piu il la variazione medio punti si diversifica**
+ 
+ **Si vede allora che dalla stagione 2000 fino a 2008 siamo andanti da 10 fino a 14 Squadre con una piccola discesa negli da 2002 a 2003,
+- Da 2009 a 2016 la lega americano  sta crescendo  le squadre da 15 fino a 20 
+- E infine da 2017 in poi, il numero sta sempre aumentando fino a 28**
+
 
 ```{r}
-
-
-
-# D a questo grafico generalizzato si vede che ci sono 3 cluster differenziate dalla distribuzione normali. Tali che le stagione da 2000 a 2008 seguono una..  
-observp = mls_standings %>%
-  ggplot(aes(x = Team,
-             y = Pts,
-             size = W,
-             color = as.factor(Season))) +
-  geom_point() +
-  facet_wrap(~Season) +
-  scale_color_manual(values = c("blue", "blue", "blue", "blue", "blue", "blue", "blue", "blue",  # Da 2000 a 2008: blu
-                                "red", "red", "red", "red", "red", "red", "red", "red",  # Da 2009 a 2016: rosso
-                                "green", "green", "green", "green", "green", "green", "green", "green"),  # Da 2017 in poi: verde
-                     name = "Stagione") +
-  labs(title = "Andamento delle squadre basato sui punti raggruppati per cluster annui",
-       x = "Punti di Ogni Team",
-       y = "Squadra")
-observp
-
-numero_squadre_per_stagioneo <- na.omit(numero_squadre_per_stagionel)
-
-dati_clusteringl <- numero_squadre_per_stagioneo[, c("Season", "NumeroSquadre")]
-
-
+dati_clusteringl <- numero_squadre_per_stagionel[, c("Season", "NumeroSquadre")]
 
 # Utilizza il k-means clustering
 set.seed(123)  # Per rendere i risultati riproducibili
 kmeans_modelc <- kmeans(dati_clusteringl, centers = 3)  # Specifica il numero di cluster desiderati
-
-
 
 # Aggiungi le informazioni di clustering al dataframe originale
 dati_clusteringl$Cluster <- as.factor(kmeans_modelc$cluster)
@@ -120,18 +119,52 @@ cluster_STAGIONElo <- ggplot(dati_clusteringl, aes(x = Season, y = NumeroSquadre
   labs(title = "Clustering delle Stagioni in Base al Numero di Squadre",
        x = "Stagione", y = "Numero di Squadre") +
   theme_fivethirtyeight()
+
 cluster_STAGIONElo
-
-
-
 
 ```
 
-## Analisi
+
+Dal secondo grafico grafico si puo evidenziare   3 gruppi di distribuzione in cui variano le Squadre in funzione dei loro punti stagionali
+
+ ** - Da 2000 a 2008  in cui la mediaPunti sembra essere 42 Punti **
+ ** - Da 2009 a 2016  in cui la media Punti è 45 **
+ ** - Da 2017 a 2022  e invece qua è 44 **
+
 
 ```{r}
+# fare un dashboard qua 
+# Da questo grafico generalizzato si vede che ci sono 3 cluster differenziate dalla distribuzione normali. Tali che le stagione da 2000 a 2008 seguono una..  
+observp = mls_standings %>%
+  ggplot(aes(x = Team,
+             y = Pts,
+             size = W,
+             color = as.factor(Season))) +
+  geom_point() +
+  facet_wrap(~Season) +
+  scale_color_manual(values = c("blue", "blue", "blue", "blue", "blue", "blue", "blue", "blue",  # Da 2000 a 2008: blu
+                                "blue", "red", "red", "red", "red", "red", "red", "red",  # Da 2009 a 2016: rosso
+                                "green", "green", "green", "green", "green", "green", "green", "green"),  # Da 2017 in poi: verde
+                     name = "Stagione") +
+  scale_x_discrete(labels = FALSE) +  
+  theme(axis.text.x = element_blank()) +
+  labs(title = "Andamento delle squadre basato sui punti raggruppati per cluster annui",
+       x = "Punti di Ogni Team",
+       y = "Squadra")
+observp
+
+numero_squadre_per_stagioneo <- na.omit(numero_squadre_per_stagionel)
+```
 
 
+
+## Analisi delle prestazioni delle franchigie nelle 3 cluster di tempo
+  
+
+In sintesi, questo grafici ti permettono di visualizzare il rendimento delle squadre di calcio in raggruppamento temporale
+ 
+  - Il rendimento delle squadre di calcio da 2000 a 2008
+```{r}
 # Seleziona le tuple con stagione da 2000 a 2008
 subset_2000_2008p <- filter(mls_standings, Season >= 2000 & Season <= 2008)
 #subset_2000_2008pl <- filter(mls_standings, Season <= 2000 & Season <= 2008)
@@ -139,13 +172,12 @@ subset_2000_2008p <- filter(mls_standings, Season >= 2000 & Season <= 2008)
 # Seleziona le tuple con stagione da 2009 a 2016
 subset_2009_2016p <- filter(mls_standings, Season >= 2009 & Season <= 2016)
 
-#SUBS <- mls_standings %>%
-  # filter(mls_standings$Team == "MIA")
-
 # Seleziona le tuple con stagione da 2017 a 2020
 subset_2017_2022p <- filter(mls_standings, Season >= 2017 & Season <= 2022)
+```
 
 
+```{r}
 highchart_chart_2000_2008p <- highchart() %>%
   hc_chart(type = "scatter") %>%
   hc_title(text = "Andamento delle squadre 2000-2008") %>%
@@ -159,10 +191,12 @@ highchart_chart_2000_2008p <- highchart() %>%
   ) %>%
   hc_tooltip(pointFormat = '<b>{point.Team}</b><br>Punti: {point.y}<br>Stagione: {point.Season}<br>Posizione: {point.Pos}  <br>GOAL SEGNATI: {point.GF} <br>Partite vinte: {point.W}')
 
-
 highchart_chart_2000_2008p
+```
 
 
+## Il rendimento delle squadre di calcio da 2009 a 2017
+```{r}
 # Convertire il grafico ggplot in highchart
 highchart_chart_2009_2016p <- highchart() %>%
   hc_chart(type = "scatter") %>%
@@ -176,13 +210,14 @@ highchart_chart_2009_2016p <- highchart() %>%
     name = "Punti"
   ) %>%
   hc_tooltip(pointFormat = '<b>{point.Team}</b><br>Punti: {point.y}<br>Stagione: {point.Season} <br>Partite vinte: {point.W}') %>%
-  hc_legend(enabled = TRUE) %>%
-  hc_credits(enabled = TRUE, text = 'Crediti: @wildjang') %>%
-  hc_theme(theme = "ggplot2") 
+  hc_credits(enabled = TRUE, text = 'Crediti: @wildjang') 
 
 highchart_chart_2009_2016p
+```
 
 
+## Il rendimento delle squadre di calcio da 2017 a 2022
+```{r}
 # Convertire il grafico ggplot in highchart
 highchart_chart_2017_2022p <- highchart() %>%
   hc_chart(type = "scatter") %>%
@@ -196,15 +231,18 @@ highchart_chart_2017_2022p <- highchart() %>%
     name = "Punti"
   ) %>%
   hc_tooltip(pointFormat = '<b>{point.Team}</b><br>Punti: {point.y}<br>Stagione: {point.Season} <br>Partite vinte: {point.W}') %>%
-  hc_legend(enabled = TRUE) %>%
-  hc_credits(enabled = TRUE, text = 'Crediti: @wildjang') %>%
-  hc_theme(theme = "darkunica") 
+  hc_credits(enabled = TRUE, text = 'Crediti: @wildjang')
+ 
 
 highchart_chart_2017_2022p
 
+#combined_chart <- wrap_plots(highchart_chart_2000_2008p, highchart_chart_2009_2016p, highchart_chart_2017_2022p, ncol = 3)
+
+
 ```
 
-## Analisi 2 
+## COMPORTAMENTO DELLE SQUADRE MIGLIORE DEI DIVERSI CLUSTERS TEMPORALI
+   I 5 MIGLIORI DA 2000 A 2008
 
 ```{r , message=FALSE, echo = FALSE}
 
@@ -239,17 +277,7 @@ summary_datalo <- mls_st %>%
     VolteMLS = sum(length(unique(Season)))  # Somma totale delle partecipazioni
   )
 
-library(ggvis)
- 
- mls_stp = mls_st %>%
-   group_by(city) %>%
-   ggvis(~city, ~Pts, fill = ~city) %>%
-   ggvis::layer_boxplots()
- 
- 
- 
- 
-library(dplyr)
+
 
 # Calcola la media per ogni squadra nelle colonne Pts, PPG e W
 subset_2000_2008pl <- subset_2000_2008p %>%
@@ -270,8 +298,6 @@ subset_2000_2008plL <- subset_2000_2008pl %>%
 top5_2000_2008pl <- subset_2000_2008plL %>%
   filter(Rank <= 5)
 
-library(dplyr)
-
 # Calcola il massimo dei punti e la stagione corrispondente per ogni squadra
 max_pts_season <- subset_2000_2008p %>%
   group_by(Team) %>%
@@ -284,14 +310,9 @@ max_pts_season <- subset_2000_2008p %>%
 top5_2000_2008m <- top5_2000_2008pl %>%
   left_join(max_pts_season, by = "Team")
 
-# Visualizza il risultato
-print(top5_2000_2008m)
-
-
 #Si nota che all'andamento del tempo la difficolta di stare tramite i primi/ essere campioni è dura perché da 2000 a 2008 abbiamo 
 
 
-library(dplyr)
 
 # Calcola la media per ogni squadra nelle colonne Pts, PPG e W
 subset_2009_2016pl <- subset_2009_2016p %>%
@@ -324,13 +345,6 @@ max_pts_season_09_16 <- subset_2009_2016p %>%
 top5_2009_2016m <- top5_2009_2016pl %>%
   left_join(max_pts_season_09_16, by = "Team")
 
-# Visualizza il risultato
-print(top5_2009_2016m)
-```
-
-## COMPORTAMENTO DELLE SQUADRE MIGLIORE DEI DIVERSI CLUSTERS
-```{r}
-library(dplyr)
 
 # Calcola la media per ogni squadra nelle colonne Pts, PPG e W
 subset_2017_2022pl <- subset_2017_2022p %>%
@@ -363,17 +377,10 @@ max_pts_season_17_22 <- subset_2017_2022p %>%
 top5_2017_2022m <- top5_2017_2022pl %>%
   left_join(max_pts_season_17_22, by = "Team")
 
-# Visualizza il risultato
-print(top5_2017_2022m)
-
-
-library(plotly)
 
 # Converti la colonna Season_Max_Pts in un fattore per ordinare correttamente sull'asse x
 top5_2000_2008m$Season_Max_Pts <- factor(top5_2000_2008m$Season_Max_Pts, levels = unique(top5_2000_2008m$Season_Max_Pts))
 
-library(highcharter)
-library(highr)
 # Creazione del grafico interattivo direttamente con la sintassi di Highcharter
 highchart_plot1 <- plot_ly(top5_2000_2008m, x = ~Team, y = ~Media_Pts, type = 'scatter', mode = 'markers',
                            text = ~paste("Season_Max_Pts: ", Season_Max_Pts, "<br>Rango: ", Rank, "<br>Punto max: ", Max_Pts, "<br> Media_GF: ", Media_GF),
@@ -384,8 +391,10 @@ highchart_plot1 <- plot_ly(top5_2000_2008m, x = ~Team, y = ~Media_Pts, type = 's
          hovermode = "closest") 
 # Visualizzazione del grafico Highcharter
 highchart_plot1
+```
 
-
+## I 5 MIGLIORI DA 2009 A 2016
+```{r}
 # Creazione del grafico interattivo direttamente con la sintassi di Highcharter
 highchart_plot2 <- plot_ly(top5_2009_2016m, x = ~Team, y = ~Media_Pts, type = 'scatter', mode = 'markers',
                            text = ~paste("Season_Max_Pts: ", Season_Max_Pts, "<br>Rango: ", Rank, "<br>Punto max: ", Max_Pts, "<br> Media_GF: ", Media_GF),
@@ -396,7 +405,10 @@ highchart_plot2 <- plot_ly(top5_2009_2016m, x = ~Team, y = ~Media_Pts, type = 's
          hovermode = "closest") 
 # Visualizzazione del grafico Highcharter
 highchart_plot2
+```
 
+## I 5 MIGLIORI DA 2017 A 2022
+```{r}
 # Creazione del grafico interattivo direttamente con la sintassi di Highcharter
 highchart_plot3 <- plot_ly(top5_2017_2022m, x = ~Team, y = ~Media_Pts, type = 'scatter', mode = 'markers',
                            text = ~paste("Season_Max_Pts: ", Season_Max_Pts, "<br>Rango: ", Rank, "<br>Punto max: ", Max_Pts, "<br> Media_GF: ", Media_GF),
@@ -408,23 +420,9 @@ highchart_plot3 <- plot_ly(top5_2017_2022m, x = ~Team, y = ~Media_Pts, type = 's
 # Visualizzazione del grafico Highcharter
 highchart_plot3
 
-library(highcharter)
-
-
-
-
-# Visualizzazione dei grafici Highcharter insieme
-par(mfrow=c(1,3))
-highchart_plot1
-highchart_plot2
-highchart_plot3
-
-
-
 ```
 
-## COME FANNO LE SQUADRE PER VINCERE , IL LORO METODO
-
+## I DIVERSI TITOLARI DEI CAMPIONI DELLA MAJOR LEAGUE SOCCER
 
 ```{r}
 
@@ -502,14 +500,25 @@ titoli_plotppl12 <- statistiche_squadral %>%
     y = 100
   ) %>%
   hc_credits(enabled = TRUE, text = '@wildjang')
+
+titoli_plotppl12
 ```
 
 
 ## LE CITTA MIGLIORI DI OGNI PERIODO 
-
+ ** BOXPLOT DELLE CITTA IN FUNZIONE DEI PUNTI AVUTI**
 
 ```{r}
+mls_stp = mls_st %>%
+   group_by(city) %>%
+   ggvis(~city, ~Pts, fill = ~city) %>%
+   ggvis::layer_boxplots()
+mls_stp
+```
 
+
+## MIGLIORE CITTA DA 2000 2008
+```{r}
 custom1 = viridis::plasma(n = 6)
 custom2l = viridis::plasma(n = 6)
 custom3l = viridis::plasma(n = 5)
@@ -539,11 +548,11 @@ grafico_torta1 <- conteggio_per_citta %>%
   hc_legend(enabled = TRUE, text = '@wildjang')
 
 # Visualizza il grafico a torta
-print(grafico_torta1)
+grafico_torta1
+```
 
-
-
-
+## MIGLIORE CITTA DA 2009 A 2016
+```{r}
 # Filtra le squadre che sono state primi
 prime_squadre2 <- top5l_2009_2016 %>%
   filter(Pos == 1)
@@ -562,9 +571,11 @@ grafico_torta2 <- conteggio_per_citta2 %>%
   hc_legend(enabled = TRUE, text = '@wildjang')
 
 # Visualizza il grafico a torta
-print(grafico_torta2)
+grafico_torta2
+```
 
-
+## MIGLIORE CITTA DA 2017 A 2022
+```{r}
 # Filtra le squadre che sono state primi
 prime_squadre3 <- top5l_2017_2022 %>%
   filter(Pos == 1)
@@ -582,10 +593,7 @@ grafico_torta3 <- conteggio_per_citta3 %>%
   hc_title(text = "Numero di volte in cui le città sono state in prima posizione", style = list(fontSize = '15px', fontWeight = 'bold')) %>%
   hc_legend(enabled = TRUE, text = '@wildjang')
 
-# Visualizza il grafico a torta
-print(grafico_torta3)
-
-
+grafico_torta3
 ```
 
 
@@ -596,7 +604,7 @@ print(grafico_torta3)
 
 ```{r , message=FALSE, echo = FALSE}
 
-custom <- viridis::mako(n = 23)
+custom <- viridis::plasma(n = 23)
 
 merged_data <- inner_join(mls_standings, summary_datalolp, by = "Team")
 
@@ -608,22 +616,18 @@ vincitori_per_stagionep <- merged_data %>%
 
 piechartvincitore <- vincitori_per_stagionep %>%
   hchart('pie', hcaes(x = Season, y = Team, color = custom)) %>%
-  hc_add_theme(hc_theme_google()) %>%
   hc_tooltip(pointFormat = '<b>Numero delle Squadre:</b> {point.y} <br>') %>%
   hc_title(text = "I vincitori della MAJOR LEAGUE SOCCER",
            style = list(fontSize = '25px', fontWeight = 'bold')) %>%
   hc_credits(enabled = TRUE, text = '@wildjang')
 
-piechartvincitore
 
 ```
 
-
-
+## IL RICAPULATIVO Delle  Migliore Citta delle Franchigie della MLS Da 2000 A 2022
 ```{r}
 
 custom3 = viridis::magma(n = 13)
-
 
 # Combina i dataframe delle prime 5 squadre di ciascun periodo
 top5l_df <- rbind(top5l_2000_2008, top5l_2009_2016, top5l_2017_2022)
@@ -655,72 +659,29 @@ grafico_tortapl <- top_conteggio_per_cittal %>%
   hc_title(text = "Numero di volte in cui le città sono state in prima posizione", style = list(fontSize = '15px', fontWeight = 'bold')) %>%
   hc_legend(enabled = TRUE, text = '@wildjang')
 
+grafico_tortapl
+
 ```
 
 
 
-## Predizione della numerosità delle squadre dei 4 prossimi anni
-
-```{r , message=FALSE, echo = FALSE}
-
-# Calcola il coefficiente di correlazione di Pearson
-
-
-numero_squadre_per_stagionel <- mls_standings %>%
-  group_by(Season) %>%
-  summarize(NumeroSquadre = n_distinct(Team))
-
-# Visualizza il grafico di dispersione o a linee
- 
-
-numero_squadre_per_stagioneo <- na.omit(numero_squadre_per_stagionel)
-
-# Calcola il coefficiente di correlazione di Pearson
-correlazione <- cor(numero_squadre_per_stagionel$Season, numero_squadre_per_stagionel$NumeroSquadre, use = "complete.obs")
-
-
-# Stampa il coefficiente di correlazione
- t = print(paste("Coefficiente di correlazione di Pearson:", round(correlazione, 3)))
- 
-
-# Visualizza il grafico di dispersione o a linee
- REGRESSIONE_STAGIONE_TEAMlo = ggplot(numero_squadre_per_stagioneo, aes(x = Season, y = NumeroSquadre)) +
-  geom_point() +
-  geom_smooth(method = "lm", se = FALSE) +
-  labs(title = "Correlazione tra Stagione e Numero di Squadre",
-       x = "Stagione", y = "Numero di Squadre") +
-  theme_fivethirtyeight()
-
-# Stampa il coefficiente di correlazione
- t = print(paste("Coefficiente di correlazione di Pearson:", round(correlazione, 3)))
-
-REGRESSIONE_STAGIONE_TEAM = ggplot(numero_squadre_per_stagionel, aes(x = Season, y = NumeroSquadre)) +
-  geom_point() +
-  geom_smooth(method = "lm", se = FALSE) +
-  labs(title = "Correlazione tra Stagione e Numero di Squadre",
-       x = "Stagione", y = "Numero di Squadre") +
-  theme_minimal()
-
-REGRESSIONE_STAGIONE_TEAM
-
-# Supponendo che tu abbia una variabile di regressione chiamata 'Season' nel tuo dataset
-modello_reg <- lm(NumeroSquadre ~ Season, data = numero_squadre_per_stagionel)
-
-# Crea un dataframe con le stagioni desiderate
-predizioni_df <- data.frame(Season = c(2023, 2024,2025,2026))
-
-# Prevedi il numero di squadre usando il modello
-predizioni_df$NumeroSquadre_Predette <- predict(modello_reg, newdata = predizioni_df)
-
-# Visualizza le predizioni
-print(predizioni_df)
-```
 
 ## Conclusioni 
 
 Dai grafici ottenuti abbiamo ricavato i seguenti risultati:
 ```{r}
+P = "Via via che cominciamo una nuova Stagione, Le numero delle squadre crescono di almeno 1"
+R = "Il campionato MLS è clamorosamente difficile e competitvo e sopratutto quelli recenti "
+```
 
+
+## Fine
+
+Ringrazio a tutti quelli che mi hanno aiutati e incoraggiati, e anche il professore di DATASCIENZE di aver seguirmi e sentirmi.
+
+                                   
+```{r}
+ V =  "***GRAZIE MILLE  ***"
 ```
 
 
